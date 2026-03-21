@@ -1,0 +1,1 @@
+ALTER TABLE q_company_settings ADD COLUMN IF NOT EXISTS system_currency text NOT NULL DEFAULT 'MYR';

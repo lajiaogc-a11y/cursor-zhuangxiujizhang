@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /
+
+# This is an internal enterprise management system.
+# No pages should be indexed by search engines.

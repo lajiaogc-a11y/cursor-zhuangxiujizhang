@@ -1,0 +1,1 @@
+ALTER TABLE q_company_settings ADD COLUMN IF NOT EXISTS currency_scopes text[] DEFAULT '{all}';

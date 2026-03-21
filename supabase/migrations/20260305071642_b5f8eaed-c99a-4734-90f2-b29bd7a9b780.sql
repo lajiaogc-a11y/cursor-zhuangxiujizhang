@@ -1,0 +1,1 @@
+ALTER TABLE q_suppliers ADD COLUMN IF NOT EXISTS supplier_code text;

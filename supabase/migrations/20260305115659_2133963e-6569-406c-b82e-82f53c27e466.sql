@@ -1,0 +1,1 @@
+ALTER TABLE public.q_quotation_drafts ADD CONSTRAINT q_quotation_drafts_user_id_key UNIQUE (user_id);

@@ -1,0 +1,1 @@
+ALTER TABLE public.payable_payments ADD COLUMN receipt_url text;

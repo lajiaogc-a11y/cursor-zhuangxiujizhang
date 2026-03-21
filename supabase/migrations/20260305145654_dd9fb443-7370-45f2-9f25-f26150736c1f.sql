@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Anyone can check invitation codes" ON public.invitation_codes;

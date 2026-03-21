@@ -1,0 +1,1 @@
+ALTER TABLE q_quotations ADD COLUMN quotation_no TEXT;
