@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { useI18n } from '@/lib/i18n';
 import { useAuth } from '@/lib/auth';
 import { useTenant } from '@/lib/tenant';
@@ -124,10 +125,10 @@ export default function TaxManagement() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {rates.length === 0 ? (
-                      <TableRow><TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
-                        {isLoading ? t('common.loading') : t('tax.noRates')}
-                      </TableCell></TableRow>
+                    {isLoading ? (
+                      <TableRow><TableCell colSpan={6} className="p-0"><AppSectionLoading label={t('common.loading')} compact /></TableCell></TableRow>
+                    ) : rates.length === 0 ? (
+                      <TableRow><TableCell colSpan={6} className="text-center py-12 text-muted-foreground">{t('tax.noRates')}</TableCell></TableRow>
                     ) : rates.map(r => (
                       <TableRow key={r.id}>
                         <TableCell className="font-medium">{r.name}</TableCell>

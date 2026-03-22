@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/lib/auth';
+import { useTenant } from '@/lib/tenant';
 import { useI18n } from '@/lib/i18n';
 import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
@@ -42,6 +43,8 @@ export default function QuotationEditorSPA() {
   const location = useLocation();
   const isMobile = useIsMobile();
   const { user } = useAuth();
+  const { tenant } = useTenant();
+  const tenantId = tenant?.id;
   const { t } = useI18n();
   const { toast } = useToast();
   const { products } = useQProducts();
@@ -183,7 +186,7 @@ export default function QuotationEditorSPA() {
         if (saved?.quotationNo) setQuotationNo(saved.quotationNo);
         if (!quotationNo) {
           setTimeout(() => {
-            const q = queryClient.getQueryData(['q_quotations']) as any[];
+            const q = queryClient.getQueryData(['q_quotations', tenantId]) as any[];
             const found = q?.find((qq: any) => qq.id === result.id);
             if (found?.quotationNo) setQuotationNo(found.quotationNo);
           }, 500);
@@ -195,7 +198,7 @@ export default function QuotationEditorSPA() {
         localStorage.removeItem('quotation_draft');
       }
     } catch { /* error handled in hook */ }
-  }, [projectNo, currentQuotationId, selectedCustomerId, quotationDate, items, summary, settings, costAnalysis, quotationNotes, quotationNotesEn, saveDraft, saveQuotation, toast, setCurrentQuotationId, t, quotations, quotationNo, getStateSnapshot, user?.id, clearServerDraft]);
+  }, [projectNo, currentQuotationId, selectedCustomerId, quotationDate, items, summary, settings, costAnalysis, quotationNotes, quotationNotesEn, saveDraft, saveQuotation, toast, setCurrentQuotationId, t, quotations, quotationNo, getStateSnapshot, user?.id, clearServerDraft, queryClient, tenantId]);
 
   const handleLoadQuotation = useCallback((q: any) => {
     loadQuotation({
@@ -241,7 +244,7 @@ export default function QuotationEditorSPA() {
   // ====== MOBILE LAYOUT ======
   if (isMobile) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-dvh bg-background flex flex-col">
         <header className="bg-card border-b border-border shrink-0 sticky top-0 z-40">
           <div className="px-4 h-12 flex items-center justify-between">
             <div className="flex items-center gap-2.5 min-w-0">
@@ -371,7 +374,7 @@ export default function QuotationEditorSPA() {
 
   // ====== DESKTOP LAYOUT ======
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-dvh bg-background flex flex-col">
       <header className="bg-card border-b border-border sticky top-0 z-40">
         <div className="flex items-center justify-between px-4 py-2.5 gap-4">
           <div className="flex items-center gap-3 shrink-0">

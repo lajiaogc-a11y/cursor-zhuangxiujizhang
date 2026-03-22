@@ -4,6 +4,7 @@ import { useAuth } from '@/lib/auth';
 import { useTenant } from '@/lib/tenant';
 import { useI18n } from '@/lib/i18n';
 import { MobilePageShell } from '@/components/layout/MobilePageShell';
+import { AppSectionLoading, ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,6 +31,7 @@ export default function QuotationUnits() {
   const { t } = useI18n();
   const { user } = useAuth();
   const { tenant } = useTenant();
+  const tenantId = tenant?.id;
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -37,16 +39,16 @@ export default function QuotationUnits() {
   const [form, setForm] = useState(emptyUnit);
 
   const { data: units = [], isLoading } = useQuery({
-    queryKey: ['q_measurement_units'],
+    queryKey: ['q_measurement_units', tenantId],
     queryFn: () => qService.fetchMeasurementUnits() as Promise<MeasurementUnit[]>,
-    enabled: !!user,
+    enabled: !!user && !!tenantId,
   });
 
   const saveMutation = useMutation({
     mutationFn: (unit: typeof emptyUnit & { id?: string }) =>
       qService.saveMeasurementUnit(unit, user?.id, tenant?.id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['q_measurement_units'] });
+      queryClient.invalidateQueries({ queryKey: ['q_measurement_units', tenantId] });
       toast({ title: t('common.success') });
       setDialogOpen(false);
       setEditingId(null);
@@ -58,7 +60,7 @@ export default function QuotationUnits() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => qService.deleteMeasurementUnit(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['q_measurement_units'] });
+      queryClient.invalidateQueries({ queryKey: ['q_measurement_units', tenantId] });
       toast({ title: t('common.deleteSuccess') });
     },
     onError: (e: any) => toast({ title: t('common.deleteFailed'), description: e.message, variant: 'destructive' }),
@@ -170,7 +172,7 @@ export default function QuotationUnits() {
         </div>
 
         {isLoading ? (
-          <div className="space-y-2">{[1,2,3,4].map(i => <div key={i} className="h-14 bg-muted/50 animate-pulse rounded-xl" />)}</div>
+          <AppSectionLoading label={t('common.loading')} compact />
         ) : units.length === 0 ? (
           <div className="text-center py-16">
             <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
@@ -204,7 +206,8 @@ export default function QuotationUnits() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('common.cancel')}</Button>
             <Button onClick={() => saveMutation.mutate(editingId ? { ...form, id: editingId } : form)} disabled={!form.name_zh || saveMutation.isPending}>
-              {saveMutation.isPending ? t('common.loading') : t('common.save')}
+              {saveMutation.isPending && <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />}
+              {t('common.save')}
             </Button>
           </DialogFooter>
         </DialogContent>

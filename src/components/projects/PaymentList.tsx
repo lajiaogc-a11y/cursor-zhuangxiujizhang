@@ -9,6 +9,7 @@ import { Plus, Edit, Trash2, Image } from 'lucide-react';
 import { toast } from 'sonner';
 import { PaymentForm } from './PaymentForm';
 import { useI18n } from '@/lib/i18n';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { ImagePreviewDialog } from '@/components/ui/image-preview-dialog';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -156,7 +157,7 @@ export function PaymentList({ open, onOpenChange, project }: PaymentListProps) {
 
           {/* 收款列表 */}
           {loading ? (
-            <div className="text-center py-8 text-muted-foreground">{t('paymentList.loading')}</div>
+            <AppSectionLoading label={t('paymentList.loading')} compact />
           ) : payments.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">{t('paymentList.noRecords')}</div>
           ) : (

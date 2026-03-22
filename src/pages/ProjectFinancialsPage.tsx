@@ -23,6 +23,8 @@ import { Input } from '@/components/ui/input';
 import { DateInput } from '@/components/ui/date-input';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
+import { useTenant } from '@/lib/tenant';
 
 interface Project {
   id: string;
@@ -77,11 +79,13 @@ export default function ProjectFinancialsPage() {
   const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
   const queryClient = useQueryClient();
+  const { tenant } = useTenant();
+  const tenantId = tenant?.id;
 
   const { data: projectData, isLoading } = useQuery({
-    queryKey: [...queryKeys.projects, 'financials', projectId],
+    queryKey: [...queryKeys.projects, tenantId, 'financials', projectId],
     queryFn: () => projectsService.fetchProjectFinancials(projectId!),
-    enabled: !!projectId,
+    enabled: !!projectId && !!tenantId,
   });
 
   const project = projectData?.project ?? null;
@@ -90,10 +94,11 @@ export default function ProjectFinancialsPage() {
   const loading = isLoading;
 
   const invalidateProjectData = () => {
-    queryClient.invalidateQueries({ queryKey: [...queryKeys.projects, 'financials', projectId] });
-    queryClient.invalidateQueries({ queryKey: queryKeys.projects });
-    queryClient.invalidateQueries({ queryKey: queryKeys.transactions });
-    queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
+    if (!tenantId) return;
+    queryClient.invalidateQueries({ queryKey: [...queryKeys.projects, tenantId, 'financials', projectId] });
+    queryClient.invalidateQueries({ queryKey: [...queryKeys.projects, tenantId] });
+    queryClient.invalidateQueries({ queryKey: [...queryKeys.transactions, tenantId] });
+    queryClient.invalidateQueries({ queryKey: [...queryKeys.dashboard, tenantId] });
   };
 
   const [additionFormOpen, setAdditionFormOpen] = useState(false);
@@ -179,9 +184,7 @@ export default function ProjectFinancialsPage() {
   if (loading || !project) {
     return (
       <MainLayout>
-        <div className="flex items-center justify-center h-96">
-          <div className="text-muted-foreground">{t('common.loading')}</div>
-        </div>
+        <AppSectionLoading label={t('common.loading')} className="min-h-[50dvh]" />
       </MainLayout>
     );
   }

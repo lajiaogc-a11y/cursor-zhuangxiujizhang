@@ -21,6 +21,7 @@ import { formatMoney } from '@/lib/formatCurrency';
 import { format } from 'date-fns';
 import { Plus, Search, Edit, Trash2, Users, Building2, UserCheck, Eye } from 'lucide-react';
 import { queryKeys } from '@/lib/queryKeys';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import * as contactsService from '@/services/contacts.service';
 
 type Contact = {
@@ -161,8 +162,10 @@ export default function Contacts() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.length === 0 ? (
-                  <TableRow><TableCell colSpan={7} className="text-center py-12 text-muted-foreground">{isLoading ? t('common.loading') : t('contacts.noContacts')}</TableCell></TableRow>
+                {isLoading ? (
+                  <TableRow><TableCell colSpan={7} className="p-0"><AppSectionLoading label={t('common.loading')} compact /></TableCell></TableRow>
+                ) : filtered.length === 0 ? (
+                  <TableRow><TableCell colSpan={7} className="text-center py-12 text-muted-foreground">{t('contacts.noContacts')}</TableCell></TableRow>
                 ) : filtered.map(c => (
                   <TableRow key={c.id}>
                     <TableCell className="font-medium">{c.name}</TableCell>

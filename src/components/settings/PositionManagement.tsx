@@ -4,9 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Plus, Check, X, Loader2 } from 'lucide-react';
+import { Edit, Trash2, Plus, Check, X } from 'lucide-react';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { useI18n } from '@/lib/i18n';
 import { useToast } from '@/hooks/use-toast';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { useDataRefresh } from '@/hooks/useDataRefresh';
 import {
   fetchPositions,
@@ -104,11 +106,7 @@ export function PositionManagement() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <AppSectionLoading label={t('common.loading')} compact />;
   }
 
   return (
@@ -127,7 +125,7 @@ export function PositionManagement() {
             className="max-w-xs"
           />
           <Button onClick={handleAdd} disabled={adding}>
-            {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4 mr-1" />}
+            {adding ? <ChromeLoadingSpinner variant="muted" className="h-4 w-4" /> : <Plus className="w-4 h-4 mr-1" />}
             {t('common.add')}
           </Button>
         </div>

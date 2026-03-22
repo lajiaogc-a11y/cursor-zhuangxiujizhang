@@ -23,6 +23,7 @@ import { useI18n } from '@/lib/i18n';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { DateRange } from 'react-day-picker';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import {
   useCalculatedBalances, useLedgerTransactions, useRefreshLedger,
   type CalculatedBalances,
@@ -203,7 +204,7 @@ export default function BalanceLedger() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="text-center py-8 text-muted-foreground">{t('common.loading')}</div>
+              <AppSectionLoading label={t('common.loading')} compact />
             ) : transactions.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Wallet className="w-12 h-12 mx-auto mb-3 opacity-30" />

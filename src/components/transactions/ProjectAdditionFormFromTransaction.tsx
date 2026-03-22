@@ -102,7 +102,7 @@ export function ProjectAdditionFormFromTransaction({ open, onOpenChange, onSucce
         setRateInput('1.0000');
         return;
       }
-      const rate = await fetchLatestExchangeRate(currency, 'MYR');
+      const rate = await fetchLatestExchangeRate(currency, 'MYR', tenant?.id);
       if (rate) {
         const formattedRate = Number(rate.toFixed(4));
         setValue('exchange_rate', formattedRate);
@@ -288,7 +288,8 @@ export function ProjectAdditionFormFromTransaction({ open, onOpenChange, onSucce
               {t('form.cancel')}
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? t('form.saving') : t('form.save')}
+              {loading && <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />}
+              {t('form.save')}
             </Button>
           </div>
         </form>

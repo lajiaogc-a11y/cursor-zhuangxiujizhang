@@ -12,6 +12,7 @@ import { useAuth } from '@/lib/auth';
 import { toast } from 'sonner';
 import { CheckCircle, AlertTriangle, RefreshCw, Wrench, Database, ShieldAlert } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 
 interface ProjectDiscrepancy {
   project_code: string;
@@ -235,12 +236,12 @@ export function DataConsistencyCheck() {
           <CardContent className="space-y-4">
             <div className="flex gap-2">
               <Button onClick={runCheck} disabled={checking || fixing} size="sm">
-                <RefreshCw className={`w-4 h-4 mr-2 ${checking ? 'animate-spin' : ''}`} />
+                {checking ? <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" /> : <RefreshCw className="mr-2 h-4 w-4" />}
                 {checking ? t('settings.checking') : t('settings.runCheck')}
               </Button>
               {result && !result.isConsistent && (
                 <Button onClick={handleFixClick} disabled={checking || fixing} variant="destructive" size="sm">
-                  <Wrench className={`w-4 h-4 mr-2 ${fixing ? 'animate-spin' : ''}`} />
+                  {fixing ? <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" /> : <Wrench className="mr-2 h-4 w-4" />}
                   {fixing ? t('settings.fixing') : t('settings.fixAll')}
                 </Button>
               )}

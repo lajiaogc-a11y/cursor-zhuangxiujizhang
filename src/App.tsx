@@ -5,6 +5,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { RouterNavigateRegistrar } from "@/components/layout/RouterNavigateRegistrar";
+import { RouteProgressBar } from "@/components/layout/RouteProgressBar";
 import { AuthProvider } from "@/lib/auth";
 import { TenantProvider } from "@/lib/tenant";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -21,17 +23,13 @@ const queryClient = new QueryClient({
       staleTime: 5 * 60 * 1000,
       refetchOnMount: false,
       refetchOnWindowFocus: false,
+      retry: 1,
+    },
+    mutations: {
+      retry: 0,
     },
   },
 });
-
-const PageLoader = () => (
-  <div className="fixed top-0 left-0 right-0 z-[9999] h-0.5 bg-primary/20 overflow-hidden">
-    <div className="h-full w-1/3 bg-primary rounded-r" 
-      style={{ animation: 'progressSlide 1.2s ease-in-out infinite' }} />
-    <style>{`@keyframes progressSlide { 0% { transform: translateX(-100%); } 100% { transform: translateX(400%); } }`}</style>
-  </div>
-);
 
 /**
  * Core routes (auth, unauthorized) are rendered without ProtectedRoute.
@@ -40,18 +38,33 @@ const PageLoader = () => (
  */
 const UNPROTECTED_PATHS = new Set(["/auth", "/unauthorized", "/reset-password", "*"]);
 
+/**
+ * 路由懒加载 chunk 加载中：不占用页面中心大 loading，仅依赖顶部 RouteProgressBar + 各页占位。
+ * 避免切页时「整页壳级」闪白与重复全屏菊花。
+ */
+function RouteSuspenseFallback() {
+  return null;
+}
+
 const App = () => (
-  <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+  <ThemeProvider
+    attribute="class"
+    defaultTheme="dark"
+    enableSystem={false}
+    disableTransitionOnChange
+  >
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <RouterNavigateRegistrar />
           <AuthProvider>
             <TenantProvider>
+              <RouteProgressBar />
               <SkipNavLink />
-              <Suspense fallback={<PageLoader />}>
+              <Suspense fallback={<RouteSuspenseFallback />}>
                 <Routes>
                   {appRoutes.map((route) => {
                     const isUnprotected = UNPROTECTED_PATHS.has(route.path);

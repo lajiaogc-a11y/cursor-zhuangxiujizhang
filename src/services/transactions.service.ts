@@ -271,23 +271,27 @@ export async function fetchTransactionFormData(tenantId: string, excludeTransact
     supabase.from('company_accounts').select('currency, account_type, balance').eq('tenant_id', tenantId),
   ]);
 
-  // Calculate real balances
-  let txQuery = supabase.from('transactions').select('currency, account_type, type, amount').eq('tenant_id', tenantId);
-  if (excludeTransactionId) txQuery = txQuery.neq('id', excludeTransactionId);
-  const { data: txData } = await txQuery;
-
-  const txTotals: Record<string, number> = {};
-  (txData || []).forEach(tx => {
-    const key = `${tx.currency}_${tx.account_type}`;
-    if (!txTotals[key]) txTotals[key] = 0;
-    txTotals[key] += tx.type === 'income' ? tx.amount : -tx.amount;
-  });
-
+  // company_accounts.balance 已由 recalculateAccountBalances 写入「流水+换汇」累计值，
+  // 直接用它作为余额，不再叠加 transactions 避免双计。
+  // 若编辑某条交易需排除，则用原值减去该笔交易影响（单笔修正）。
   const balances: Record<string, number> = {};
   (accountsRes.data || []).forEach(acc => {
     const key = `${acc.currency}_${acc.account_type}`;
-    balances[key] = acc.balance + (txTotals[key] || 0);
+    balances[key] = Number(acc.balance || 0);
   });
+
+  if (excludeTransactionId) {
+    const { data: excludedTx } = await supabase
+      .from('transactions')
+      .select('currency, account_type, type, amount')
+      .eq('id', excludeTransactionId)
+      .single();
+    if (excludedTx) {
+      const key = `${excludedTx.currency}_${excludedTx.account_type}`;
+      const effect = excludedTx.type === 'income' ? excludedTx.amount : -excludedTx.amount;
+      balances[key] = (balances[key] || 0) - effect;
+    }
+  }
 
   // If no categories exist for this tenant, seed default ones
   let categories = categoriesRes.data || [];
@@ -317,18 +321,25 @@ export async function fetchTransactionFormData(tenantId: string, excludeTransact
 }
 
 /**
- * 获取最新汇率
+ * 获取最新汇率（建议传入 tenantId 以读取当前组织汇率）
  */
-export async function fetchLatestExchangeRate(fromCurrency: string, toCurrency: string = 'MYR'): Promise<number | null> {
-  const { data } = await supabase
+export async function fetchLatestExchangeRate(
+  fromCurrency: string,
+  toCurrency: string = 'MYR',
+  tenantId?: string | null
+): Promise<number | null> {
+  let q = supabase
     .from('exchange_rates')
     .select('rate')
     .eq('from_currency', fromCurrency as any)
     .eq('to_currency', toCurrency as any)
     .order('rate_date', { ascending: false })
-    .limit(1)
-    .single();
-  return data ? Number(data.rate.toFixed(4)) : null;
+    .limit(1);
+  if (tenantId) {
+    q = q.eq('tenant_id', tenantId);
+  }
+  const { data } = await q.maybeSingle();
+  return data ? Number(Number(data.rate).toFixed(4)) : null;
 }
 
 // ══════════════════════════════════════

@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
-import { Skeleton } from '@/components/ui/skeleton';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { useAuth } from '@/lib/auth';
+import { useTenant } from '@/lib/tenant';
 import { useI18n } from '@/lib/i18n';
 import { useQuery } from '@tanstack/react-query';
 import { fetchQuotationStats } from '@/services/quotation.service';
@@ -10,12 +11,14 @@ import { FileText, Users, Package, History, BookOpen, FolderTree, Settings, Rule
 export default function QuotationIndex() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { tenant } = useTenant();
+  const tenantId = tenant?.id;
   const { t } = useI18n();
 
   const { data: stats, isLoading } = useQuery({
-    queryKey: ['q-quotation-stats'],
+    queryKey: ['q-quotation-stats', tenantId],
     queryFn: fetchQuotationStats,
-    enabled: !!user,
+    enabled: !!user && !!tenantId,
     staleTime: 60_000,
   });
 
@@ -54,7 +57,11 @@ export default function QuotationIndex() {
               ))}
             </div>
           )}
-          {isLoading && <div className="h-12 mt-4" />}
+          {isLoading && (
+            <div className="flex justify-center mt-4 py-2 text-primary-foreground/90">
+              <ChromeLoadingSpinner variant="muted" className="h-6 w-6 text-inherit" />
+            </div>
+          )}
         </div>
 
         {/* Module Cards v2 - horizontal layout */}

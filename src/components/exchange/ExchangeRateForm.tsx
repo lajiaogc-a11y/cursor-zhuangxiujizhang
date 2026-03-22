@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/auth';
 import { useTenant } from '@/lib/tenant';
 import { useToast } from '@/hooks/use-toast';
 import { useI18n } from '@/lib/i18n';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
@@ -245,7 +246,8 @@ export function ExchangeRateForm({ exchangeRate, onSuccess, onCancel }: Exchange
             {t('form.cancel')}
           </Button>
           <Button type="submit" disabled={loading}>
-            {loading ? t('form.saving') : exchangeRate ? t('form.update') : t('form.add')}
+            {loading && <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />}
+            {exchangeRate ? t('form.update') : t('form.add')}
           </Button>
         </div>
       </form>

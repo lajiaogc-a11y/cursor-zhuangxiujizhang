@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ResponsiveTable } from '@/components/ui/responsive-table';
@@ -45,13 +45,21 @@ export default function WorkerTypesPage() {
 
   const save = useMutation({
     mutationFn: async (wt: any) => costService.saveWorkerType(wt, user?.id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['q_worker_types'] }); toast({ title: t('cost.saved') }); setDialogOpen(false); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['q_worker_types', tenantId] });
+      queryClient.invalidateQueries({ queryKey: ['q_worker_types_select', tenantId] });
+      toast({ title: t('cost.saved') }); setDialogOpen(false);
+    },
     onError: (e: any) => toast({ title: t('cost.saveFailed'), description: e.message, variant: 'destructive' }),
   });
 
   const del = useMutation({
     mutationFn: (id: string) => costService.deactivateWorkerType(id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['q_worker_types'] }); toast({ title: t('cost.deleted') }); setDeleteId(null); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['q_worker_types', tenantId] });
+      queryClient.invalidateQueries({ queryKey: ['q_worker_types_select', tenantId] });
+      toast({ title: t('cost.deleted') }); setDeleteId(null);
+    },
   });
 
   const desktopTable = (
@@ -118,7 +126,7 @@ export default function WorkerTypesPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input placeholder={t('cost.searchWorkerType')} value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
         </div>
-        {isLoading ? <div className="space-y-3">{[1,2].map(i => <Skeleton key={i} className="h-16" />)}</div>
+        {isLoading ? <AppSectionLoading label={t('common.loading')} compact />
         : filtered.length === 0 ? <div className="text-center py-12 text-muted-foreground"><Users className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>{t('cost.noWorkerTypes')}</p></div>
         : <ResponsiveTable mobileView={mobileCards} desktopView={desktopTable} />}
       </div>

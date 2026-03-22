@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Sparkles, Loader2, RefreshCw, X } from 'lucide-react';
+import { Sparkles, RefreshCw, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { getSessionToken } from '@/services/settings.service';
 import { useI18n } from '@/lib/i18n';
+import { AppSectionLoading, ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 
 interface ReportData {
   totalIncome: number;
@@ -72,7 +73,7 @@ export function AIReportSummary({ reportData, period }: AIReportSummaryProps) {
         className="gap-2"
       >
         {isLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
+          <ChromeLoadingSpinner variant="muted" className="h-4 w-4" />
         ) : (
           <Sparkles className="h-4 w-4" />
         )}
@@ -98,7 +99,7 @@ export function AIReportSummary({ reportData, period }: AIReportSummaryProps) {
               disabled={isLoading}
             >
               {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <ChromeLoadingSpinner variant="muted" className="h-4 w-4" />
               ) : (
                 <RefreshCw className="h-4 w-4" />
               )}
@@ -122,9 +123,7 @@ export function AIReportSummary({ reportData, period }: AIReportSummaryProps) {
             </div>
           </div>
         ) : (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
+          <AppSectionLoading label={t('common.loading')} compact />
         )}
       </CardContent>
     </Card>

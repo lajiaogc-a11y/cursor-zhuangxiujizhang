@@ -20,6 +20,7 @@ import { formatMoney } from '@/lib/formatCurrency';
 import { format } from 'date-fns';
 import { exportInvoiceToPDF } from '@/lib/invoicePdfExport';
 import { queryKeys } from '@/lib/queryKeys';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import * as invoicesService from '@/services/invoices.service';
 
 type Invoice = {
@@ -233,10 +234,10 @@ export default function Invoices() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.length === 0 ? (
-                  <TableRow><TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
-                    {isLoading ? t('common.loading') : t('invoices.noInvoices')}
-                  </TableCell></TableRow>
+                {isLoading ? (
+                  <TableRow><TableCell colSpan={7} className="p-0"><AppSectionLoading label={t('common.loading')} compact /></TableCell></TableRow>
+                ) : filtered.length === 0 ? (
+                  <TableRow><TableCell colSpan={7} className="text-center py-12 text-muted-foreground">{t('invoices.noInvoices')}</TableCell></TableRow>
                 ) : filtered.map((inv: any) => {
                   const contact = contacts.find((c: any) => c.id === inv.contact_id);
                   return (

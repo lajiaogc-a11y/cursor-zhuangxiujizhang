@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Switch } from '@/components/ui/switch';
 import { Megaphone, Plus, Trash2, Info, AlertTriangle, Wrench, Sparkles } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { useAuth } from '@/lib/auth';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -24,7 +25,7 @@ const typeConfig = {
 };
 
 export function SystemAnnouncements() {
-  const { language } = useI18n();
+  const { language, t } = useI18n();
   const { user } = useAuth();
   const zh = language === 'zh';
   const queryClient = useQueryClient();
@@ -81,7 +82,7 @@ export function SystemAnnouncements() {
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground text-center py-8">{zh ? '加载中...' : 'Loading...'}</p>
+        <AppSectionLoading label={t('common.loading')} compact />
       ) : announcements.length === 0 ? (
         <Card>
           <CardContent className="text-center py-12">

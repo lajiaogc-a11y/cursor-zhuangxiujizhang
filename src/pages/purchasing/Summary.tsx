@@ -3,7 +3,7 @@ import { BarChart3, Download } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useQPurchaseOrders } from '@/hooks/useQPurchaseOrders';
@@ -95,7 +95,7 @@ export default function SummaryPage() {
         </div>
       }>
       <div className="p-4 space-y-4">
-        {loading ? <div className="space-y-3">{[1,2,3,4].map(i => <Skeleton key={i} className="h-24" />)}</div> : (
+        {loading ? <AppSectionLoading label={t('common.loading')} compact /> : (
           <>
             {/* Stat Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

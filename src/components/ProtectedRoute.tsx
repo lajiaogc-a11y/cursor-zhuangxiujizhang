@@ -1,7 +1,8 @@
 import { forwardRef } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
-import { Loader2 } from 'lucide-react';
+import { useI18n } from '@/lib/i18n';
+import { AppChromeLoading } from '@/components/layout/AppChromeLoading';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -10,13 +11,10 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute = forwardRef<HTMLDivElement, ProtectedRouteProps>(function ProtectedRoute({ children, permissionKey }, ref) {
   const { user, loading, userRole, hasPermission } = useAuth();
+  const { t } = useI18n();
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
+    return <AppChromeLoading label={t('common.loading')} />;
   }
 
   if (!user) {

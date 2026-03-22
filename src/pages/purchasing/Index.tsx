@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Skeleton } from '@/components/ui/skeleton';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { useAuth } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n';
 import { useQPurchaseOrders } from '@/hooks/useQPurchaseOrders';
@@ -56,7 +56,11 @@ export default function PurchasingIndex() {
               ))}
             </div>
           )}
-          {loading && <div className="h-12 mt-4" />}
+          {loading && (
+            <div className="flex justify-center mt-4 py-2 text-primary-foreground/90">
+              <ChromeLoadingSpinner variant="muted" className="h-6 w-6 text-inherit" />
+            </div>
+          )}
         </div>
 
         {/* Module Cards v2 */}

@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -25,6 +25,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { costService } from '@/services';
 import { useAuth } from '@/lib/auth';
+import { useTenant } from '@/lib/tenant';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { useI18n } from '@/lib/i18n';
@@ -32,6 +33,8 @@ import { useResponsive } from '@/hooks/useResponsive';
 
 export default function BudgetPage() {
   const { user } = useAuth();
+  const { tenant } = useTenant();
+  const tenantId = tenant?.id;
   const { toast } = useToast();
   const { t } = useI18n();
   const navigate = useNavigate();
@@ -46,7 +49,7 @@ export default function BudgetPage() {
   const { sortConfig, requestSort, sortData } = useSortableTable<any>();
 
   const { data: breakdowns = [], isLoading } = useQuery({
-    queryKey: ['q_project_breakdowns'],
+    queryKey: ['q_project_breakdowns', tenantId],
     queryFn: async () => {
       const data = await costService.fetchBreakdowns();
       return (data || []).map((b: any) => ({
@@ -63,13 +66,13 @@ export default function BudgetPage() {
         createdAt: b.created_at,
       }));
     },
-    enabled: !!user,
+    enabled: !!user && !!tenantId,
   });
 
   const { data: quotations = [] } = useQuery({
-    queryKey: ['q_quotations_for_budget'],
+    queryKey: ['q_quotations_for_budget', tenantId],
     queryFn: () => costService.fetchQuotationsForBudget(),
-    enabled: !!user && createOpen,
+    enabled: !!user && !!tenantId && createOpen,
   });
 
   const createBreakdown = useMutation({
@@ -84,7 +87,7 @@ export default function BudgetPage() {
       return costService.createBreakdown(insertData);
     },
     onSuccess: (id: string) => {
-      queryClient.invalidateQueries({ queryKey: ['q_project_breakdowns'] });
+      queryClient.invalidateQueries({ queryKey: ['q_project_breakdowns', tenantId] });
       toast({ title: t('cost.budgetCreated') });
       setCreateOpen(false);
       setNewBreakdown({ name: '', quotedAmount: 0, managementFeePct: 10, taxPct: 6 });
@@ -97,7 +100,7 @@ export default function BudgetPage() {
   const deleteBreakdown = useMutation({
     mutationFn: (id: string) => costService.deleteBreakdown(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['q_project_breakdowns'] });
+      queryClient.invalidateQueries({ queryKey: ['q_project_breakdowns', tenantId] });
       toast({ title: t('cost.budgetDeleted') }); setDeleteId(null);
     },
   });
@@ -219,7 +222,7 @@ export default function BudgetPage() {
           <div className="stat-card-v2"><div className="flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center"><span className="text-[10px] font-bold text-primary">RM</span></div><div><p className="text-lg font-bold">{(breakdowns.reduce((s: number, b: any) => s + b.totalCost, 0) / 1000).toFixed(1)}K</p><p className="text-[10px] text-muted-foreground">{t('cost.totalCost')}</p></div></div></div>
         </div>
 
-        {isLoading ? <div className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-24" />)}</div>
+        {isLoading ? <AppSectionLoading label={t('common.loading')} compact />
         : filtered.length === 0 ? <div className="text-center py-12 text-sm text-muted-foreground">{search ? t('cost.noMatchingProjects') : t('cost.noBudgetProjects')}</div>
         : isMobile ? renderCards() : renderTable()}
       </div>

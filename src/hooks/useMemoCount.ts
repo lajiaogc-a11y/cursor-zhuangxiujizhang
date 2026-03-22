@@ -19,21 +19,22 @@ export function useMemoCount() {
   });
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !tenantId) return;
 
+    const memoKey = [...queryKeys.memoCount, tenantId] as const;
     const unsubscribe = subscribeToTable('memos-count', 'memos', () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.memoCount });
+      queryClient.invalidateQueries({ queryKey: memoKey });
     });
 
     const interval = setInterval(() => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.memoCount });
+      queryClient.invalidateQueries({ queryKey: memoKey });
     }, 60000);
 
     return () => {
       unsubscribe();
       clearInterval(interval);
     };
-  }, [user, queryClient]);
+  }, [user, tenantId, queryClient]);
 
   return count;
 }

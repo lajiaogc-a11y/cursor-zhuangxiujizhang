@@ -7,13 +7,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Key, Copy, Trash2, Plus, Loader2, AlertTriangle, Clock, Building2 } from 'lucide-react';
+import { Key, Copy, Trash2, Plus, AlertTriangle, Clock, Building2 } from 'lucide-react';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { fetchInvitationCodesAndTenants, createInvitationCode, toggleInvitationCode, deleteInvitationCode, type InvitationCode } from '@/services/admin.service';
 import { useAuth } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 
 interface Tenant { id: string; name: string; }
 
@@ -155,7 +157,7 @@ export function InvitationCodeManagement() {
             <Input value={note} onChange={e => setNote(e.target.value)} placeholder={t('invite.note')} maxLength={100} />
           </div>
           <Button onClick={handleGenerate} disabled={generating || !selectedTenantId} className="h-10">
-            {generating ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Plus className="w-4 h-4 mr-1" />}
+            {generating ? <ChromeLoadingSpinner variant="muted" className="mr-1 h-4 w-4" /> : <Plus className="w-4 h-4 mr-1" />}
             {t('invite.generate')}
           </Button>
         </div>
@@ -179,7 +181,7 @@ export function InvitationCodeManagement() {
 
         {/* Table */}
         {loading ? (
-          <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
+          <AppSectionLoading label={t('common.loading')} compact />
         ) : codes.length === 0 ? (
           <p className="text-center py-8 text-muted-foreground">{t('invite.noData')}</p>
         ) : (

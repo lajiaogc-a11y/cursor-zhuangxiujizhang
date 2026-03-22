@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Gauge, Zap, Clock, Globe, TrendingDown, BarChart3 } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 
 interface PagePerf {
   page: string;
@@ -142,7 +143,7 @@ export function PerformanceAnalytics() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <p className="text-sm text-muted-foreground text-center py-8">{zh ? '加载中...' : 'Loading...'}</p>
+            <AppSectionLoading label={t('common.loading')} compact />
           ) : pageStats.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">{zh ? '暂无数据' : 'No data'}</p>
           ) : (

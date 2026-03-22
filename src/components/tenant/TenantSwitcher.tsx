@@ -1,7 +1,7 @@
 import { useTenant } from '@/lib/tenant';
 import { useI18n } from '@/lib/i18n';
-import { useSuperAdmin } from '@/hooks/useSuperAdmin';
-import { Building2, Check, ChevronDown, Loader2 } from 'lucide-react';
+import { Building2, Check, ChevronDown } from 'lucide-react';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -10,17 +10,16 @@ import { Button } from '@/components/ui/button';
 export function TenantSwitcher() {
   const { tenant, tenants, switching, switchTenant } = useTenant();
   const { language } = useI18n();
-  const isSuperAdmin = useSuperAdmin();
 
-  // Only super admins can switch tenants; normal users stay in their own tenant
-  if (!isSuperAdmin || tenants.length <= 1) return null;
+  // 用户属于多个组织时均可切换（此前仅超管可见会导致多租户成员无法换组织）
+  if (tenants.length <= 1) return null;
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2 h-8 px-3 text-xs" disabled={switching}>
           {switching ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />
+            <ChromeLoadingSpinner variant="muted" className="h-3.5 w-3.5" />
           ) : (
             <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
           )}

@@ -4,8 +4,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Edit, Send, CheckCircle } from 'lucide-react';
+import { Edit, Send, CheckCircle } from 'lucide-react';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { useI18n } from '@/lib/i18n';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { useToast } from '@/hooks/use-toast';
 import { fetchSalaryCalcData, issueSalary } from '@/services/payroll.service';
 import { useAuth } from '@/lib/auth';
@@ -358,11 +360,7 @@ export function SalaryCalculation({ employees, loading, onRefresh }: SalaryCalcu
   const unissuedCount = employeeSalaryList.filter(e => !e.isIssued).length;
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <AppSectionLoading label={t('common.loading')} compact />;
   }
 
   if (employees.filter(e => e.status === 'active').length === 0) {
@@ -455,7 +453,7 @@ export function SalaryCalculation({ employees, loading, onRefresh }: SalaryCalcu
                   <AlertDialogTrigger asChild>
                     <Button size="sm" disabled={issuingId === emp.employeeId}>
                       {issuingId === emp.employeeId ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <ChromeLoadingSpinner variant="muted" className="h-4 w-4" />
                       ) : (
                         <Send className="w-4 h-4" />
                       )}
@@ -602,7 +600,7 @@ export function SalaryCalculation({ employees, loading, onRefresh }: SalaryCalcu
                             <AlertDialogTrigger asChild>
                               <Button variant="ghost" size="icon" disabled={issuingId === emp.employeeId}>
                                 {issuingId === emp.employeeId ? (
-                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                  <ChromeLoadingSpinner variant="muted" className="h-4 w-4" />
                                 ) : (
                                   <Send className="w-4 h-4 text-primary" />
                                 )}

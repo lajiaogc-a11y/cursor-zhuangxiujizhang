@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -22,6 +22,7 @@ import { useQSuppliers, type QSupplier } from '@/hooks/useQSuppliers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { purchasingService } from '@/services';
 import { useAuth } from '@/lib/auth';
+import { useTenant } from '@/lib/tenant';
 import { useToast } from '@/hooks/use-toast';
 import { useI18n } from '@/lib/i18n';
 import { useResponsive } from '@/hooks/useResponsive';
@@ -29,6 +30,8 @@ import { useResponsive } from '@/hooks/useResponsive';
 export default function SuppliersPage() {
   const { suppliers, loading } = useQSuppliers();
   const { user } = useAuth();
+  const { tenant } = useTenant();
+  const tenantId = tenant?.id;
   const { toast } = useToast();
   const { t } = useI18n();
   const queryClient = useQueryClient();
@@ -57,13 +60,13 @@ export default function SuppliersPage() {
 
   const save = useMutation({
     mutationFn: (s: any) => purchasingService.saveSupplier(s, user?.id, suppliers),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['q_suppliers_list'] }); toast({ title: t('purchasing.supplierSaved') }); setDialogOpen(false); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['q_suppliers_list', tenantId] }); toast({ title: t('purchasing.supplierSaved') }); setDialogOpen(false); },
     onError: (e: any) => toast({ title: t('purchasing.saveFailed'), description: e.message, variant: 'destructive' }),
   });
 
   const del = useMutation({
     mutationFn: (id: string) => purchasingService.deactivateSupplier(id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['q_suppliers_list'] }); toast({ title: t('purchasing.supplierDeleted') }); setDeleteId(null); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['q_suppliers_list', tenantId] }); toast({ title: t('purchasing.supplierDeleted') }); setDeleteId(null); },
   });
 
   const openAdd = () => { setEditing({ name: '', contactPerson: '', phone: '', email: '', address: '', paymentTerms: '', notes: '' }); setDialogOpen(true); };
@@ -148,7 +151,7 @@ export default function SuppliersPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input placeholder={t('purchasing.searchSupplier')} value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
         </div>
-        {loading ? <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-20" />)}</div>
+        {loading ? <AppSectionLoading label={t('common.loading')} compact />
         : filtered.length === 0 ? <div className="text-center py-12 text-muted-foreground"><Building2 className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>{t('purchasing.noSuppliers')}</p></div>
         : isMobile ? renderMobileCards() : renderTable()}
       </div>

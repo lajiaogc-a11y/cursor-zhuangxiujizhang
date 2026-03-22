@@ -13,7 +13,9 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Lock, Unlock, ChevronLeft, ChevronRight, Loader2, CalendarCheck, ShieldAlert } from 'lucide-react';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
+import { Lock, Unlock, ChevronLeft, ChevronRight, CalendarCheck, ShieldAlert } from 'lucide-react';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { format } from 'date-fns';
 
 interface AccountingPeriod {
@@ -148,9 +150,7 @@ export function AccountingPeriodManagement() {
           </div>
 
           {isLoading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-            </div>
+            <AppSectionLoading label={t('common.loading')} className="min-h-0 py-12" />
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
               {Array.from({ length: 12 }, (_, i) => i + 1).map(month => {
@@ -242,7 +242,7 @@ export function AccountingPeriodManagement() {
               className={confirmAction?.type === 'close' ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : ''}
               disabled={closePeriodMut.isPending || reopenPeriodMut.isPending}
             >
-              {(closePeriodMut.isPending || reopenPeriodMut.isPending) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {(closePeriodMut.isPending || reopenPeriodMut.isPending) && <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />}
               {confirmAction?.type === 'close'
                 ? (language === 'zh' ? '确认关闭' : 'Close Period')
                 : (language === 'zh' ? '确认开放' : 'Reopen Period')}

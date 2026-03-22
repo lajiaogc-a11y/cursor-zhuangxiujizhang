@@ -1,3 +1,5 @@
+import type { QueryClient } from '@tanstack/react-query';
+
 // 统一的查询键管理，用于 React Query 缓存失效
 export const queryKeys = {
   // 交易相关
@@ -6,8 +8,10 @@ export const queryKeys = {
   
   // 项目相关
   projects: ['projects'] as const,
-  projectTransactions: (projectId: string) => ['projectTransactions', projectId] as const,
-  projectAdditions: (projectId: string) => ['projectAdditions', projectId] as const,
+  projectTransactions: (tenantId: string, projectId: string) =>
+    ['projectTransactions', tenantId, projectId] as const,
+  projectAdditions: (tenantId: string, projectId: string) =>
+    ['projectAdditions', tenantId, projectId] as const,
   
   // 账户相关
   accounts: ['accounts'] as const,
@@ -133,30 +137,29 @@ export const invalidationMap = {
     queryKeys.dashboard,
   ],
   
-  // 项目交易操作影响的查询
-  projectTransactionMutation: (projectId: string) => [
+  // 项目交易：除 projectTransactions / financials 外的前缀（需拼接 tenantId 再失效）
+  projectTransactionMutationPrefixes: [
     queryKeys.transactions,
     queryKeys.transactionStats,
     queryKeys.projects,
-    queryKeys.projectTransactions(projectId),
     queryKeys.accounts,
     queryKeys.accountBalances,
     queryKeys.dashboard,
     queryKeys.balanceLedger,
     queryKeys.calculatedBalances,
   ],
-  
-  // 项目增项操作影响的查询
-  projectAdditionMutation: (projectId: string) => [
+
+  // 项目增项：除 projectAdditions / financials 外的前缀
+  projectAdditionMutationPrefixes: [
     queryKeys.transactions,
     queryKeys.projects,
-    queryKeys.projectAdditions(projectId),
     queryKeys.dashboard,
   ],
   
   // 换汇操作影响的查询
   exchangeMutation: [
     queryKeys.exchanges,
+    queryKeys.exchangeRates,
     queryKeys.transactions,
     queryKeys.accounts,
     queryKeys.accountBalances,
@@ -202,3 +205,20 @@ export const invalidationMap = {
     queryKeys.alertCount,
   ],
 } as const;
+
+/** 按「前缀 + tenantId」失效（TanStack Query 前缀匹配当前租户缓存） */
+export function invalidateQueriesWithTenant(
+  qc: QueryClient,
+  tenantId: string | undefined,
+  prefixes: readonly (readonly unknown[])[]
+): void {
+  if (!tenantId) return;
+  for (const prefix of prefixes) {
+    qc.invalidateQueries({ queryKey: [...prefix, tenantId] });
+  }
+}
+
+/** 预警相关查询均带 tenantId */
+export function invalidateAlertQueries(qc: QueryClient, tenantId: string | undefined): void {
+  invalidateQueriesWithTenant(qc, tenantId, invalidationMap.alertMutation);
+}

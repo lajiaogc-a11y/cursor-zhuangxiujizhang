@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Label } from '@/components/ui/label';
 import { Settings2, Save, Edit, CalendarDays, Users, Package } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -26,7 +27,7 @@ interface TenantConfig {
 }
 
 export function TenantConfigManager() {
-  const { language } = useI18n();
+  const { language, t } = useI18n();
   const zh = language === 'zh';
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState<TenantConfig | null>(null);
@@ -119,7 +120,7 @@ export function TenantConfigManager() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <p className="text-sm text-muted-foreground text-center py-8">{zh ? '加载中...' : 'Loading...'}</p>
+            <AppSectionLoading label={t('common.loading')} compact />
           ) : (
             <div className="rounded-md border overflow-x-auto">
               <Table compact>
@@ -134,31 +135,31 @@ export function TenantConfigManager() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {tenants.map(t => {
-                    const members = memberCounts.get(t.id) || 0;
-                    const expired = isExpired(t);
+                  {tenants.map(tenantRow => {
+                    const members = memberCounts.get(tenantRow.id) || 0;
+                    const expired = isExpired(tenantRow);
                     return (
-                      <TableRow key={t.id}>
+                      <TableRow key={tenantRow.id}>
                         <TableCell>
                           <div>
-                            <p className="text-sm font-medium">{t.name}</p>
-                            <p className="text-[10px] text-muted-foreground">{t.slug}</p>
+                            <p className="text-sm font-medium">{tenantRow.name}</p>
+                            <p className="text-[10px] text-muted-foreground">{tenantRow.slug}</p>
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className={`text-[10px] ${planColors[t.plan] || ''}`}>
-                            {planLabel(t.plan)}
+                          <Badge variant="outline" className={`text-[10px] ${planColors[tenantRow.plan] || ''}`}>
+                            {planLabel(tenantRow.plan)}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-center">
-                          <span className={`font-mono text-sm ${members >= t.max_members ? 'text-destructive font-bold' : ''}`}>
-                            {members}/{t.max_members}
+                          <span className={`font-mono text-sm ${members >= tenantRow.max_members ? 'text-destructive font-bold' : ''}`}>
+                            {members}/{tenantRow.max_members}
                           </span>
                         </TableCell>
                         <TableCell>
-                          {t.expires_at ? (
+                          {tenantRow.expires_at ? (
                             <span className={`text-sm ${expired ? 'text-destructive font-medium' : ''}`}>
-                              {format(new Date(t.expires_at), 'yyyy-MM-dd')}
+                              {format(new Date(tenantRow.expires_at), 'yyyy-MM-dd')}
                               {expired && <Badge variant="destructive" className="text-[9px] ml-1">{zh ? '已过期' : 'Expired'}</Badge>}
                             </span>
                           ) : (
@@ -166,12 +167,12 @@ export function TenantConfigManager() {
                           )}
                         </TableCell>
                         <TableCell>
-                          <Badge variant={t.status === 'active' ? 'default' : 'secondary'} className="text-[10px]">
-                            {t.status === 'active' ? (zh ? '活跃' : 'Active') : (zh ? '停用' : 'Suspended')}
+                          <Badge variant={tenantRow.status === 'active' ? 'default' : 'secondary'} className="text-[10px]">
+                            {tenantRow.status === 'active' ? (zh ? '活跃' : 'Active') : (zh ? '停用' : 'Suspended')}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button variant="ghost" size="sm" className="h-7 gap-1" onClick={() => openEdit(t)}>
+                          <Button variant="ghost" size="sm" className="h-7 gap-1" onClick={() => openEdit(tenantRow)}>
                             <Edit className="w-3 h-3" />
                             {zh ? '配置' : 'Edit'}
                           </Button>

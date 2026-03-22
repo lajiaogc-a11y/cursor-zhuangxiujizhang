@@ -25,7 +25,8 @@ import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { DateRange } from 'react-day-picker';
 import { queryKeys } from '@/lib/queryKeys';
 import { useTenant } from '@/lib/tenant';
-import { useProjectsWithTransactions, useRefreshProjects } from '@/hooks/useProjectService';
+import { useProjectsWithTransactions } from '@/hooks/useProjectService';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 
 interface Project {
   id: string;
@@ -445,8 +446,8 @@ export default function Projects() {
             {/* Project List */}
             {loading ? (
               <Card>
-                <CardContent className="py-16 text-center text-muted-foreground">
-                  {t('common.loading')}
+                <CardContent className="p-0">
+                  <AppSectionLoading label={t('common.loading')} compact className="py-16 min-h-[200px]" />
                 </CardContent>
               </Card>
             ) : filteredProjects.length === 0 ? (
@@ -465,7 +466,7 @@ export default function Projects() {
                 projects={filteredProjects}
                 onEdit={handleEdit}
                 onViewPayments={handleViewPayments}
-                onRefresh={() => queryClient.invalidateQueries({ queryKey: queryKeys.projects })}
+                onRefresh={() => tenantId && queryClient.invalidateQueries({ queryKey: [...queryKeys.projects, tenantId] })}
                 onViewFinancials={handleViewFinancials}
                 canEdit={canEdit}
               />
@@ -479,8 +480,9 @@ export default function Projects() {
         onOpenChange={setFormOpen}
         project={editingProject}
         onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: queryKeys.projects });
-          queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
+          if (!tenantId) return;
+          queryClient.invalidateQueries({ queryKey: [...queryKeys.projects, tenantId] });
+          queryClient.invalidateQueries({ queryKey: [...queryKeys.dashboard, tenantId] });
         }}
       />
     </MainLayout>

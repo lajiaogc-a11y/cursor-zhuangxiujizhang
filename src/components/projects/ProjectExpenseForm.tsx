@@ -22,6 +22,7 @@ import { useI18n } from '@/lib/i18n';
 import { ImageUploader } from '@/components/ui/image-uploader';
 import { ImagePreviewDialog } from '@/components/ui/image-preview-dialog';
 import { useUploadWithRetry } from '@/hooks/useUploadWithRetry';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 
 type ExpenseCategory = 'material' | 'project_management' | 'outsourcing' | 'transportation' | 'labor' | 'other';
 
@@ -154,7 +155,7 @@ export function ProjectExpenseForm({ open, onOpenChange, projectId, expense, onS
         setRateInput('1.0000');
         return;
       }
-      const rate = await fetchLatestExchangeRate(currency);
+      const rate = await fetchLatestExchangeRate(currency, 'MYR', tenant?.id);
       if (rate) {
         setValue('exchange_rate', rate);
         setRateInput(rate.toFixed(4));
@@ -434,7 +435,8 @@ export function ProjectExpenseForm({ open, onOpenChange, projectId, expense, onS
               {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={loading || uploadingReceipt}>
-              {loading ? t('form.saving') : t('common.save')}
+              {loading && <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />}
+              {t('common.save')}
             </Button>
           </div>
         </form>

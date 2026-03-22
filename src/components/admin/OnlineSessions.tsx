@@ -4,11 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Users, Clock, Monitor, Wifi, Globe } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { formatDistanceToNow } from 'date-fns';
 import { zhCN, enUS } from 'date-fns/locale';
 
 export function OnlineSessions() {
-  const { language } = useI18n();
+  const { language, t } = useI18n();
   const zh = language === 'zh';
 
   const { data: onlineUsers = [], isLoading } = useQuery({
@@ -61,7 +62,7 @@ export function OnlineSessions() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <p className="text-sm text-muted-foreground text-center py-8">{zh ? '加载中...' : 'Loading...'}</p>
+            <AppSectionLoading label={t('common.loading')} compact />
           ) : onlineUsers.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">{zh ? '暂无活跃会话' : 'No active sessions'}</p>
           ) : (
@@ -69,7 +70,7 @@ export function OnlineSessions() {
               {onlineUsers.map((u: any) => (
                 <div key={u.user_id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 gap-3">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${u.isOnline ? 'bg-success animate-pulse' : 'bg-muted-foreground/40'}`} />
+                    <div className={`w-2.5 h-2.5 rounded-full shrink-0 motion-reduce:animate-none ${u.isOnline ? 'bg-success animate-pulse' : 'bg-muted-foreground/40'}`} />
                     <div className="min-w-0">
                       <p className="text-sm font-medium truncate">{u.username}</p>
                       <p className="text-[11px] text-muted-foreground truncate">{u.email}</p>

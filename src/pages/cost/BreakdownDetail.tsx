@@ -9,7 +9,7 @@ import { ResponsiveTable } from '@/components/ui/responsive-table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
@@ -29,6 +29,7 @@ import { useAuth } from '@/lib/auth';
 import { useTenant } from '@/lib/tenant';
 import { useToast } from '@/hooks/use-toast';
 import { useI18n } from '@/lib/i18n';
+import { AppChromeLoading } from '@/components/layout/AppChromeLoading';
 import { useCompanySettings } from '@/hooks/useCompanySettings';
 import { format } from 'date-fns';
 import * as XLSX from 'xlsx';
@@ -38,6 +39,7 @@ export default function BreakdownDetailPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { tenant } = useTenant();
+  const tenantId = tenant?.id;
   const { toast } = useToast();
   const { t } = useI18n();
   const queryClient = useQueryClient();
@@ -57,7 +59,7 @@ export default function BreakdownDetailPage() {
   };
 
   const { data: breakdown, isLoading: loadingBreakdown } = useQuery({
-    queryKey: ['q_project_breakdown', quotationId],
+    queryKey: ['q_project_breakdown', tenantId, quotationId],
     queryFn: async () => {
       const data = await costService.fetchBreakdownDetail(quotationId!);
       return {
@@ -68,19 +70,19 @@ export default function BreakdownDetailPage() {
         managementFeePct: Number(data.management_fee_pct) || 0, taxPct: Number(data.tax_pct) || 0, createdAt: data.created_at,
       };
     },
-    enabled: !!quotationId && !!user,
+    enabled: !!quotationId && !!user && !!tenantId,
   });
 
   // Fetch quotation items JSON to resolve quotation_item_id to product names
   const { data: quotationItemNameMap = {} } = useQuery({
-    queryKey: ['q_quotation_item_names', breakdown?.quotationId],
+    queryKey: ['q_quotation_item_names', tenantId, breakdown?.quotationId],
     queryFn: () => costService.fetchQuotationItemNames(breakdown!.quotationId),
-    enabled: !!breakdown?.quotationId,
+    enabled: !!breakdown?.quotationId && !!tenantId,
     staleTime: 5 * 60 * 1000,
   });
 
   const { data: items = [], isLoading: loadingItems } = useQuery({
-    queryKey: ['q_breakdown_items', quotationId],
+    queryKey: ['q_breakdown_items', tenantId, quotationId],
     queryFn: async () => {
       const data = await costService.fetchBreakdownItems(quotationId!);
       return data.map((item: any) => ({
@@ -94,44 +96,45 @@ export default function BreakdownDetailPage() {
         estimatedCost: Number(item.estimated_cost) || 0,
       }));
     },
-    enabled: !!quotationId,
+    enabled: !!quotationId && !!tenantId,
   });
 
   const methodIds = useMemo(() => [...new Set(items.filter(i => i.methodId).map(i => i.methodId))] as string[], [items]);
+  const sortedMethodIds = useMemo(() => [...methodIds].sort(), [methodIds]);
   const { data: laborRates = [] } = useQuery({
-    queryKey: ['q_labor_rates', methodIds],
+    queryKey: ['q_labor_rates', tenantId, sortedMethodIds],
     queryFn: () => costService.fetchLaborRatesByMethods(methodIds),
-    enabled: methodIds.length > 0,
+    enabled: methodIds.length > 0 && !!tenantId,
   });
 
   const { data: versions = [] } = useQuery({
-    queryKey: ['q_breakdown_versions', quotationId],
+    queryKey: ['q_breakdown_versions', tenantId, quotationId],
     queryFn: async () => {
       const data = await costService.fetchBreakdownVersions(quotationId!);
       return data.map((v: any) => ({ id: v.id, versionNumber: v.version_number, totalMaterialCost: Number(v.total_material_cost) || 0, totalLaborCost: Number(v.total_labor_cost) || 0, totalCost: Number(v.total_cost) || 0, changeDescription: v.change_description || '', createdAt: v.created_at }));
     },
-    enabled: !!quotationId && tab === 'versions',
+    enabled: !!quotationId && !!tenantId && tab === 'versions',
   });
 
   const { data: attachments = [] } = useQuery({
-    queryKey: ['q_breakdown_attachments', quotationId],
+    queryKey: ['q_breakdown_attachments', tenantId, quotationId],
     queryFn: () => costService.fetchBreakdownAttachments(quotationId!),
-    enabled: !!quotationId && tab === 'attachments',
+    enabled: !!quotationId && !!tenantId && tab === 'attachments',
   });
 
   const { data: materials = [] } = useQuery({
-    queryKey: ['q_materials_bd_select'],
+    queryKey: ['q_materials_bd_select', tenantId],
     queryFn: () => costService.fetchMaterialsSelect(),
-    enabled: !!user && addItemOpen,
+    enabled: !!user && !!tenantId && addItemOpen,
   });
 
   const { data: methods = [] } = useQuery({
-    queryKey: ['q_methods_bd_select'],
+    queryKey: ['q_methods_bd_select', tenantId],
     queryFn: async () => {
       const data = await costService.fetchMethodsSelect();
       return data.map((m: any) => ({ id: m.id, name: m.name_zh }));
     },
-    enabled: !!user && addItemOpen,
+    enabled: !!user && !!tenantId && addItemOpen,
   });
 
   const itemsTotal = useMemo(() => items.reduce((s, i) => s + i.estimatedCost, 0), [items]);
@@ -161,8 +164,9 @@ export default function BreakdownDetailPage() {
       await costService.recalcBreakdownTotals(quotationId!, laborTotal, breakdown?.quotedAmount || 0);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['q_breakdown_items', quotationId] });
-      queryClient.invalidateQueries({ queryKey: ['q_project_breakdown', quotationId] });
+      queryClient.invalidateQueries({ queryKey: ['q_breakdown_items', tenantId, quotationId] });
+      queryClient.invalidateQueries({ queryKey: ['q_project_breakdown', tenantId, quotationId] });
+      queryClient.invalidateQueries({ queryKey: ['q_project_breakdowns', tenantId] });
       toast({ title: t('bd.materialAdded') }); setAddItemOpen(false);
       setNewItem({ materialId: '', methodId: '', quantity: 1, wastePct: 5, unitPrice: 0 });
     },
@@ -175,8 +179,9 @@ export default function BreakdownDetailPage() {
       await costService.recalcBreakdownTotals(quotationId!, laborTotal, breakdown?.quotedAmount || 0);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['q_breakdown_items', quotationId] });
-      queryClient.invalidateQueries({ queryKey: ['q_project_breakdown', quotationId] });
+      queryClient.invalidateQueries({ queryKey: ['q_breakdown_items', tenantId, quotationId] });
+      queryClient.invalidateQueries({ queryKey: ['q_project_breakdown', tenantId, quotationId] });
+      queryClient.invalidateQueries({ queryKey: ['q_project_breakdowns', tenantId] });
       toast({ title: t('bd.deleted') }); setDeleteItemId(null);
     },
   });
@@ -187,7 +192,11 @@ export default function BreakdownDetailPage() {
       if (status === 'submitted') { update.submitted_to_procurement_at = new Date().toISOString(); update.submitted_to_procurement_by = user?.id; }
       await costService.updateBreakdownStatus(quotationId!, update);
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['q_project_breakdown', quotationId] }); queryClient.invalidateQueries({ queryKey: ['q_project_breakdowns'] }); toast({ title: t('bd.statusUpdated') }); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['q_project_breakdown', tenantId, quotationId] });
+      queryClient.invalidateQueries({ queryKey: ['q_project_breakdowns', tenantId] });
+      toast({ title: t('bd.statusUpdated') });
+    },
   });
 
   const saveVersion = useMutation({
@@ -196,12 +205,16 @@ export default function BreakdownDetailPage() {
       const itemsJson = items.map(i => ({ materialId: i.materialId, materialName: i.materialName, quantity: i.quantity, wastePct: i.wastePct, purchaseQuantity: i.purchaseQuantity, unitPrice: i.unitPrice, estimatedCost: i.estimatedCost }));
       await costService.saveBreakdownVersion({ project_breakdown_id: quotationId, version_number: nextVersion, items: itemsJson, total_material_cost: itemsTotal, total_labor_cost: laborTotal, total_cost: totalCost, change_description: versionDesc, created_by: user?.id, tenant_id: tenant?.id });
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['q_breakdown_versions', quotationId] }); toast({ title: t('bd.versionSaved') }); setSaveVersionOpen(false); setVersionDesc(''); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['q_breakdown_versions', tenantId, quotationId] }); toast({ title: t('bd.versionSaved') }); setSaveVersionOpen(false); setVersionDesc(''); },
   });
 
   const submitToProcurement = useMutation({
     mutationFn: () => costService.submitBreakdownToProcurement(quotationId!, items, itemsTotal, breakdown?.name || '', user?.id, tenant?.id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['q_project_breakdown', quotationId] }); toast({ title: t('bd.procSubmitted') }); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['q_project_breakdown', tenantId, quotationId] });
+      queryClient.invalidateQueries({ queryKey: ['q_project_breakdowns', tenantId] });
+      toast({ title: t('bd.procSubmitted') });
+    },
     onError: (e: any) => toast({ title: t('bd.procFailed'), description: e.message, variant: 'destructive' }),
   });
 
@@ -227,17 +240,17 @@ export default function BreakdownDetailPage() {
     const file = e.target.files?.[0]; if (!file) return;
     try {
       await costService.uploadBreakdownAttachment(quotationId!, file, user?.id);
-      queryClient.invalidateQueries({ queryKey: ['q_breakdown_attachments', quotationId] });
+      queryClient.invalidateQueries({ queryKey: ['q_breakdown_attachments', tenantId, quotationId] });
       toast({ title: t('bd.fileUploaded') });
     } catch (err: any) {
       toast({ title: t('bd.uploadFailed'), description: err.message, variant: 'destructive' });
     }
   }
 
-  if (loadingBreakdown) return <div className="min-h-screen bg-background flex items-center justify-center"><Skeleton className="h-8 w-48" /></div>;
+  if (loadingBreakdown) return <AppChromeLoading label={t('common.loading')} />;
 
   if (!breakdown) return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+    <div className="min-h-dvh bg-background flex flex-col items-center justify-center gap-4">
       <p className="text-muted-foreground">{t('bd.notFound')}</p>
       <Button onClick={() => navigate('/cost/budget')}>{t('bd.backToList')}</Button>
     </div>
@@ -247,7 +260,7 @@ export default function BreakdownDetailPage() {
   const isDraft = breakdown.status === 'draft';
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <header className="bg-card border-b border-border sticky top-0 z-40">
         <div className="flex items-center justify-between px-4 h-12">
           <div className="flex items-center gap-2">
@@ -307,7 +320,7 @@ export default function BreakdownDetailPage() {
               <h3 className="text-sm font-semibold">{t('bd.bomTitle')} ({items.length})</h3>
               {isDraft && <Button size="sm" className="h-7 text-xs gap-1" onClick={() => setAddItemOpen(true)}><Plus className="w-3.5 h-3.5" /> {t('bd.addBtn')}</Button>}
             </div>
-            {loadingItems ? <div className="space-y-2">{[1, 2, 3].map(i => <Skeleton key={i} className="h-20" />)}</div>
+            {loadingItems ? <AppSectionLoading label={t('common.loading')} compact />
             : items.length === 0 ? <p className="text-center py-8 text-sm text-muted-foreground">{t('bd.noBomItems')}</p>
             : <ResponsiveTable
                 mobileView={

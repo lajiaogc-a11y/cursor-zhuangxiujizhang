@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { format } from 'date-fns';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useI18n } from '@/lib/i18n';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 
 interface Props {
   open: boolean;
@@ -96,7 +97,7 @@ export function QuotationHistoryDialog({ open, onOpenChange, quotations, onLoad,
     if (qId !== currentQuotationId) {
       return <div className="text-xs text-muted-foreground py-3 text-center">{t('qh.loadToSeeVersions')}</div>;
     }
-    if (versionsLoading) return <div className="text-xs text-muted-foreground py-3 text-center">{t('common.loading')}</div>;
+    if (versionsLoading) return <AppSectionLoading label={t('common.loading')} compact className="min-h-[100px] py-3" />;
     if (qVersions.length === 0) return <div className="text-xs text-muted-foreground py-3 text-center">{t('qh.noVersions')}</div>;
 
     return (

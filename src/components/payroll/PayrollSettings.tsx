@@ -6,10 +6,12 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Edit, Trash2, Save, Loader2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Save } from 'lucide-react';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import * as payrollService from '@/services/payroll.service';
 import { useI18n } from '@/lib/i18n';
 import { toast } from 'sonner';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 
 interface PayrollSetting {
   id: string;
@@ -213,11 +215,7 @@ export function PayrollSettings() {
   const poolPercents = settings.filter(s => s.setting_type === 'pool_percent');
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <AppSectionLoading label={t('common.loading')} compact />;
   }
 
   return (
@@ -256,7 +254,7 @@ export function PayrollSettings() {
             </div>
           </div>
           <Button onClick={handleSaveInsurance} className="mt-4" disabled={saving}>
-            {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            {saving && <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />}
             <Save className="w-4 h-4 mr-2" />
             {t('common.save')}
           </Button>
@@ -296,7 +294,7 @@ export function PayrollSettings() {
             </div>
           </div>
           <Button onClick={handleSaveAttendance} className="mt-4" disabled={saving}>
-            {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            {saving && <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />}
             <Save className="w-4 h-4 mr-2" />
             {t('common.save')}
           </Button>
@@ -501,7 +499,7 @@ export function PayrollSettings() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setBonusDialogOpen(false)}>{t('common.cancel')}</Button>
             <Button onClick={handleAddBonus} disabled={saving || !bonusTitle.trim()}>
-              {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {saving && <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />}
               {t('common.save')}
             </Button>
           </DialogFooter>
@@ -539,7 +537,7 @@ export function PayrollSettings() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setPositionBonusDialogOpen(false)}>{t('common.cancel')}</Button>
             <Button onClick={handleAddPositionBonus} disabled={saving || !selectedPosition}>
-              {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {saving && <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />}
               {t('common.save')}
             </Button>
           </DialogFooter>
@@ -577,7 +575,7 @@ export function PayrollSettings() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setPoolDialogOpen(false)}>{t('common.cancel')}</Button>
             <Button onClick={handleAddPoolPercent} disabled={saving || !poolPosition}>
-              {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {saving && <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />}
               {t('common.save')}
             </Button>
           </DialogFooter>

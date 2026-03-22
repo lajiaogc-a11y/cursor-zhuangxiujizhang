@@ -33,10 +33,12 @@ export async function fetchQSuppliers(tenantId: string): Promise<QSupplier[]> {
   return data as QSupplier[];
 }
 
-export async function fetchSupplierPriceCounts(): Promise<Record<string, number>> {
+export async function fetchSupplierPriceCounts(tenantId: string): Promise<Record<string, number>> {
+  requireTenantId(tenantId);
   const { data, error } = await (supabase as any)
     .from('q_material_supplier_prices')
-    .select('supplier_id');
+    .select('supplier_id')
+    .eq('tenant_id', tenantId);
   if (error) handleSupabaseError(error);
   const counts: Record<string, number> = {};
   data?.forEach((r: any) => { counts[r.supplier_id] = (counts[r.supplier_id] || 0) + 1; });

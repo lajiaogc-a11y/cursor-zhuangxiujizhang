@@ -2,7 +2,6 @@ import { createContext, useContext, useEffect, useState, ReactNode, useCallback 
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
-import { queryKeys } from '@/lib/queryKeys';
 
 interface AuthContextType {
   user: User | null;
@@ -15,6 +14,8 @@ interface AuthContextType {
   signUp: (email: string, password: string, username: string, tenantId?: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshPermissions: () => Promise<void>;
+  /** 重新拉取角色 + 权限（SPA 内刷新，避免整页 reload） */
+  refreshUserAccess: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,10 +30,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [permissionsLoaded, setPermissionsLoaded] = useState(false);
   const queryClient = useQueryClient();
 
-  // Prefetch is handled by individual pages with proper tenant_id filtering
-  const prefetchCommonData = useCallback(() => {
-    // No-op: pages handle their own data fetching with tenant context
-  }, []);
+  /** 常用数据预取在 TenantProvider 中按 tenantId 触发（见 prefetchTenantCommonData） */
+  const prefetchCommonData = useCallback(() => {}, []);
 
   const fetchUserRole = async (userId: string) => {
     try {
@@ -92,6 +91,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user) {
       await fetchUserPermissions(user.id);
     }
+  }, [user]);
+
+  const refreshUserAccess = useCallback(async () => {
+    if (!user) return;
+    await Promise.all([fetchUserRole(user.id), fetchUserPermissions(user.id)]);
   }, [user]);
 
   useEffect(() => {
@@ -191,7 +195,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, userRole, permissions, hasPermission, signIn, signUp, signOut, refreshPermissions }}>
+    <AuthContext.Provider value={{ user, session, loading, userRole, permissions, hasPermission, signIn, signUp, signOut, refreshPermissions, refreshUserAccess }}>
       {children}
     </AuthContext.Provider>
   );

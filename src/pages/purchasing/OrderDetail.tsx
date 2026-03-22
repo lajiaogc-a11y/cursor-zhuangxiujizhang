@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AppChromeLoading, ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,12 +23,13 @@ import {
 } from '@/components/ui/select';
 import {
   ArrowLeft, Printer, FileDown, FileSpreadsheet, Package, Building2, Calendar, Truck,
-  Send, Archive, Upload, Paperclip, Clock, User, Download, Trash2, Loader2, Eye,
+  Send, Archive, Upload, Paperclip, Clock, User, Download, Trash2, Eye,
   Plus, CheckCircle2, Edit, Save,
 } from 'lucide-react';
 import { purchasingService } from '@/services';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/auth';
+import { useTenant } from '@/lib/tenant';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useQPurchaseOrders } from '@/hooks/useQPurchaseOrders';
 import { useI18n } from '@/lib/i18n';
@@ -62,6 +63,8 @@ export default function OrderDetailPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { tenant } = useTenant();
+  const tenantId = tenant?.id;
   const isMobile = useIsMobile();
   const { t } = useI18n();
   const queryClient = useQueryClient();
@@ -103,15 +106,15 @@ export default function OrderDetailPage() {
   const [materialSearch, setMaterialSearch] = useState('');
 
   const { data: detailData, isLoading: loading, refetch: fetchAll } = useQuery({
-    queryKey: ['orderDetail', orderId],
+    queryKey: ['orderDetail', tenantId, orderId],
     queryFn: () => purchasingService.fetchOrderDetail(orderId!),
-    enabled: !!orderId,
+    enabled: !!orderId && !!tenantId,
   });
 
   const { data: procMaterials = [] } = useQuery({
-    queryKey: ['q_materials_detail_select'],
+    queryKey: ['q_materials_detail_select', tenantId],
     queryFn: () => purchasingService.fetchActiveMaterialsWithCode(),
-    enabled: addItemOpen,
+    enabled: addItemOpen && !!tenantId,
   });
 
   const order = detailData?.order as OrderInfo | undefined;
@@ -134,7 +137,7 @@ export default function OrderDetailPage() {
       setSavingItem(true);
       await purchasingService.updateOrderItem(editingItemId, orderId, editQty, editPrice);
       setEditingItemId(null);
-      queryClient.invalidateQueries({ queryKey: ['orderDetail', orderId] });
+      queryClient.invalidateQueries({ queryKey: ['orderDetail', tenantId, orderId] });
     } catch (error: any) {
       toast({ title: t('od.saveFailed'), description: error.message, variant: 'destructive' });
     } finally {
@@ -147,7 +150,7 @@ export default function OrderDetailPage() {
     try {
       await purchasingService.deleteOrderItem(deletingItemId, orderId);
       setDeletingItemId(null);
-      queryClient.invalidateQueries({ queryKey: ['orderDetail', orderId] });
+      queryClient.invalidateQueries({ queryKey: ['orderDetail', tenantId, orderId] });
       toast({ title: t('od.itemDeleted') });
     } catch (error: any) {
       toast({ title: t('od.deleteFailed'), description: error.message, variant: 'destructive' });
@@ -162,7 +165,7 @@ export default function OrderDetailPage() {
         materialId: addMaterialId, quantity: addQty, unitPrice: addPrice, notes: '',
       });
       setAddItemOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['orderDetail', orderId] });
+      queryClient.invalidateQueries({ queryKey: ['orderDetail', tenantId, orderId] });
       toast({ title: t('od.itemAdded') });
     } catch (error: any) {
       toast({ title: t('od.addFailed'), description: error.message, variant: 'destructive' });
@@ -185,7 +188,7 @@ export default function OrderDetailPage() {
       setConfirmingOrder(true);
       await confirmOrder(orderId);
       setConfirmOrderOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['orderDetail', orderId] });
+      queryClient.invalidateQueries({ queryKey: ['orderDetail', tenantId, orderId] });
     } catch (error: any) {
       toast({ title: t('od.confirmFailed'), description: error.message, variant: 'destructive' });
     } finally {
@@ -204,7 +207,7 @@ export default function OrderDetailPage() {
       }
       toast({ title: t('od.uploadSuccess') });
       setUploadDialogOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['orderDetail', orderId] });
+      queryClient.invalidateQueries({ queryKey: ['orderDetail', tenantId, orderId] });
     } catch (error: any) {
       toast({ title: t('od.uploadFailed'), description: error.message, variant: 'destructive' });
     } finally {
@@ -217,7 +220,7 @@ export default function OrderDetailPage() {
     try {
       await purchasingService.deleteAttachment({ id: att.id, fileUrl: att.fileUrl });
       toast({ title: t('od.attachmentDeleted') });
-      queryClient.invalidateQueries({ queryKey: ['orderDetail', orderId] });
+      queryClient.invalidateQueries({ queryKey: ['orderDetail', tenantId, orderId] });
     } catch (error: any) {
       toast({ title: t('od.deleteFailed'), description: error.message, variant: 'destructive' });
     }
@@ -225,13 +228,13 @@ export default function OrderDetailPage() {
 
   const handleSubmitToFinance = async () => {
     if (!orderId) return;
-    try { await submitToFinance(orderId); setSubmitConfirmOpen(false); queryClient.invalidateQueries({ queryKey: ['orderDetail', orderId] }); }
+    try { await submitToFinance(orderId); setSubmitConfirmOpen(false); queryClient.invalidateQueries({ queryKey: ['orderDetail', tenantId, orderId] }); }
     catch (error: any) { toast({ title: t('od.submitFailed'), description: error.message, variant: 'destructive' }); }
   };
 
   const handleArchive = async () => {
     if (!orderId) return;
-    try { await archiveOrder(orderId); setArchiveConfirmOpen(false); queryClient.invalidateQueries({ queryKey: ['orderDetail', orderId] }); }
+    try { await archiveOrder(orderId); setArchiveConfirmOpen(false); queryClient.invalidateQueries({ queryKey: ['orderDetail', tenantId, orderId] }); }
     catch (error: any) { toast({ title: t('od.archiveFailed'), description: error.message, variant: 'destructive' }); }
   };
 
@@ -287,10 +290,10 @@ export default function OrderDetailPage() {
     return m.code?.toLowerCase().includes(term) || m.name?.toLowerCase().includes(term);
   });
 
-  if (loading) return <div className="min-h-screen bg-background p-6"><Skeleton className="h-8 w-48 mb-4" /><Skeleton className="h-64 w-full" /></div>;
+  if (loading) return <AppChromeLoading label={t('common.loading')} />;
 
   if (!order) return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
+    <div className="min-h-dvh bg-background flex items-center justify-center">
       <Card><CardContent className="py-12 text-center">
         <Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
         <p className="text-muted-foreground">{t('od.orderNotFound')}</p>
@@ -304,7 +307,7 @@ export default function OrderDetailPage() {
   const canArchive = order.status === 'submitted_to_finance';
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <header className="border-b bg-card sticky top-0 z-50 print:hidden">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -611,7 +614,7 @@ export default function OrderDetailPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setAddItemOpen(false)}>{t('common.cancel')}</Button>
             <Button onClick={handleAddItem} disabled={addingItem || !addMaterialId || addQty <= 0}>
-              {addingItem && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
+              {addingItem && <ChromeLoadingSpinner variant="muted" className="mr-1 h-4 w-4" />}
               {t('od.add')}
             </Button>
           </DialogFooter>
@@ -630,7 +633,7 @@ export default function OrderDetailPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmOrder} disabled={confirmingOrder}>
-              {confirmingOrder && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
+              {confirmingOrder && <ChromeLoadingSpinner variant="muted" className="mr-1 h-4 w-4" />}
               {t('od.confirmOrder')}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -673,7 +676,7 @@ export default function OrderDetailPage() {
               <Label>{t('od.selectFile')}</Label>
               <Input ref={fileInputRef} type="file" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" onChange={handleFileUpload} disabled={uploading} />
             </div>
-            {uploading && <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" />{t('od.uploading')}</div>}
+            {uploading && <div className="flex items-center gap-2 text-sm text-muted-foreground"><ChromeLoadingSpinner variant="muted" className="h-4 w-4" />{t('od.uploading')}</div>}
           </div>
         </DialogContent>
       </Dialog>

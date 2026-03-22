@@ -5,7 +5,8 @@ import { useSortableTable } from '@/hooks/useSortableTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Edit, Trash2, Loader2 } from 'lucide-react';
+import { Edit, Trash2 } from 'lucide-react';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { useI18n } from '@/lib/i18n';
 import { useToast } from '@/hooks/use-toast';
 import { deleteSalaryAdvance } from '@/services/payroll.service';
@@ -55,7 +56,7 @@ export function AdvanceList({ advances, loading, onEdit, onRefresh, canEdit = tr
     return `${symbol} ${amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
-  if (loading) return <div className="flex items-center justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
+  if (loading) return <AppSectionLoading label={t('common.loading')} compact />;
   if (advances.length === 0) return <div className="text-center py-8 text-muted-foreground">{t('payroll.noAdvances')}</div>;
 
   if (isMobile) {

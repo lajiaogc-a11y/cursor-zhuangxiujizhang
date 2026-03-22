@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { MobilePageShell } from '@/components/layout/MobilePageShell';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { useI18n } from '@/lib/i18n';
 import { useAuth } from '@/lib/auth';
 import { useTenant } from '@/lib/tenant';
@@ -65,7 +66,7 @@ export default function CRMCustomers() {
       await crmService.saveCustomer(tenantId!, user?.id || '', data, data.id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['crm-customers'] });
+      queryClient.invalidateQueries({ queryKey: ['crm-customers', tenantId] });
       setDialogOpen(false);
       setEditingCustomer(null);
       setForm(emptyForm);
@@ -213,10 +214,10 @@ export default function CRMCustomers() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.length === 0 ? (
-                    <TableRow><TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
-                      {isLoading ? t('common.loading') : t('crm.noCustomers')}
-                    </TableCell></TableRow>
+                  {isLoading ? (
+                    <TableRow><TableCell colSpan={8} className="p-0"><AppSectionLoading label={t('common.loading')} compact /></TableCell></TableRow>
+                  ) : filtered.length === 0 ? (
+                    <TableRow><TableCell colSpan={8} className="text-center py-12 text-muted-foreground">{t('crm.noCustomers')}</TableCell></TableRow>
                   ) : filtered.map(c => (
                     <TableRow key={c.id} className="cursor-pointer" onClick={() => navigate(`/crm/customers/${c.id}`)}>
                       <TableCell className="font-medium whitespace-nowrap">{c.name}</TableCell>

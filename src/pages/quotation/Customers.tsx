@@ -3,7 +3,7 @@ import { MobilePageShell } from '@/components/layout/MobilePageShell';
 import { Users, Plus, Pencil, Trash2, Search, Phone, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AppSectionLoading, ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
@@ -132,7 +132,7 @@ export default function CustomersPage() {
         </div>
 
         {loading ? (
-          <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-12" />)}</div>
+          <AppSectionLoading label={t('common.loading')} compact />
         ) : filtered.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
@@ -163,7 +163,10 @@ export default function CustomersPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('common.cancel')}</Button>
             <Button onClick={handleSave} disabled={!editing?.nameZh || addCustomer.isPending || updateCustomer.isPending}>
-              {addCustomer.isPending || updateCustomer.isPending ? t('common.loading') : t('common.save')}
+              {(addCustomer.isPending || updateCustomer.isPending) && (
+                <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />
+              )}
+              {t('common.save')}
             </Button>
           </DialogFooter>
         </DialogContent>

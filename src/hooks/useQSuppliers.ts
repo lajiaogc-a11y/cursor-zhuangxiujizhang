@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
+import { useTenant } from '@/lib/tenant';
 import * as qs from '@/services/quotation.service';
 
 export interface QSupplier {
@@ -17,11 +18,13 @@ export interface QSupplier {
 
 export function useQSuppliers() {
   const { user } = useAuth();
+  const { tenant } = useTenant();
+  const tenantId = tenant?.id;
 
   const { data: suppliers = [], isLoading } = useQuery({
-    queryKey: ['q_suppliers_list'],
+    queryKey: ['q_suppliers_list', tenantId],
     queryFn: () => qs.fetchQSuppliers() as Promise<QSupplier[]>,
-    enabled: !!user,
+    enabled: !!user && !!tenantId,
   });
 
   return { suppliers, loading: isLoading };

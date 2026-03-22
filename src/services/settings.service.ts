@@ -624,25 +624,51 @@ export async function adjustAccountInitialBalance(accountId: string, balance: nu
 export async function recalculateAccountBalances(tenantId: string): Promise<void> {
   requireTenantId(tenantId);
 
-  const [txRes, exRes] = await Promise.all([
-    supabase.from('transactions').select('currency, account_type, type, amount').eq('tenant_id', tenantId),
-    supabase.from('exchange_transactions').select('out_currency, out_account_type, out_amount, in_currency, in_account_type, in_amount').eq('tenant_id', tenantId),
-  ]);
+  const PAGE_SIZE = 1000;
 
-  if (txRes.error) throw txRes.error;
-  if (exRes.error) throw exRes.error;
+  // 分页取全部 transactions，避免 Supabase 默认 1000 行截断
+  let allTx: { currency: string; account_type: string; type: string; amount: number }[] = [];
+  let page = 0;
+  while (true) {
+    const { data, error } = await supabase
+      .from('transactions')
+      .select('currency, account_type, type, amount')
+      .eq('tenant_id', tenantId)
+      .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    allTx = allTx.concat(data);
+    if (data.length < PAGE_SIZE) break;
+    page++;
+  }
+
+  // 分页取全部 exchange_transactions
+  let allEx: { out_currency: string; out_account_type: string; out_amount: number; in_currency: string; in_account_type: string; in_amount: number }[] = [];
+  page = 0;
+  while (true) {
+    const { data, error } = await supabase
+      .from('exchange_transactions')
+      .select('out_currency, out_account_type, out_amount, in_currency, in_account_type, in_amount')
+      .eq('tenant_id', tenantId)
+      .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    allEx = allEx.concat(data);
+    if (data.length < PAGE_SIZE) break;
+    page++;
+  }
 
   const balanceMap: Record<string, number> = {};
   const currencies = ['MYR', 'CNY', 'USD'];
   const accountTypes = ['cash', 'bank'];
   currencies.forEach(c => accountTypes.forEach(a => { balanceMap[`${c}-${a}`] = 0; }));
 
-  txRes.data?.forEach((tx: any) => {
+  allTx.forEach((tx: any) => {
     const key = `${tx.currency}-${tx.account_type}`;
     balanceMap[key] = (balanceMap[key] || 0) + (tx.type === 'income' ? tx.amount : -tx.amount);
   });
 
-  exRes.data?.forEach((ex: any) => {
+  allEx.forEach((ex: any) => {
     balanceMap[`${ex.out_currency}-${ex.out_account_type}`] = (balanceMap[`${ex.out_currency}-${ex.out_account_type}`] || 0) - ex.out_amount;
     balanceMap[`${ex.in_currency}-${ex.in_account_type}`] = (balanceMap[`${ex.in_currency}-${ex.in_account_type}`] || 0) + ex.in_amount;
   });

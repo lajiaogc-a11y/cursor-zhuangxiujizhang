@@ -61,18 +61,27 @@ export async function fetchReportData(
   const { dateFrom, dateTo } = filters;
   const hasDateRange = dateFrom && dateTo;
 
-  // Parallel fetch: transactions, categories, projects, exchanges
-  let txQuery = supabase.from('transactions').select('*').eq('tenant_id', tenantId);
-  if (hasDateRange) txQuery = txQuery.gte('transaction_date', dateFrom!).lte('transaction_date', dateTo!);
-
-  const [txRes, sysCatRes, projCatRes, projectsRes] = await Promise.all([
-    txQuery,
+  // Parallel fetch: categories, projects + paginated transactions
+  const [sysCatRes, projCatRes, projectsRes] = await Promise.all([
     supabase.from('transaction_categories').select('name, type').eq('tenant_id', tenantId).eq('is_active', true),
     supabase.from('project_categories').select('name, type').eq('tenant_id', tenantId).eq('is_active', true),
     supabase.from('projects').select('*').eq('tenant_id', tenantId),
   ]);
 
-  const transactions = txRes.data || [];
+  // 分页取全量 transactions，避免默认 1000 行截断
+  const PAGE_SIZE = 1000;
+  let transactions: any[] = [];
+  let page = 0;
+  while (true) {
+    let q = supabase.from('transactions').select('*').eq('tenant_id', tenantId);
+    if (hasDateRange) q = q.gte('transaction_date', dateFrom!).lte('transaction_date', dateTo!);
+    const { data, error } = await q.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    transactions = transactions.concat(data);
+    if (data.length < PAGE_SIZE) break;
+    page++;
+  }
   const companyCategoryNames = new Set(sysCatRes.data?.map(c => c.name) || []);
   const projectCategoryNames = new Set(projCatRes.data?.map(c => c.name) || []);
 

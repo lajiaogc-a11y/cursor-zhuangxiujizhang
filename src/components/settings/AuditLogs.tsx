@@ -20,6 +20,7 @@ import { format } from 'date-fns';
 import { zhCN, enUS } from 'date-fns/locale';
 import type { Json } from '@/integrations/supabase/types';
 import { useI18n } from '@/lib/i18n';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 
 interface AuditLog {
   id: string;
@@ -323,7 +324,7 @@ export function AuditLogs() {
         <div className="border rounded-lg overflow-hidden">
           <div className="max-h-[500px] overflow-y-auto">
             {loading ? (
-              <div className="text-center py-12 text-muted-foreground">{t('common.loading')}</div>
+              <AppSectionLoading label={t('common.loading')} compact className="min-h-[180px]" />
             ) : filteredLogs.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <History className="w-12 h-12 mx-auto mb-3 opacity-30" />

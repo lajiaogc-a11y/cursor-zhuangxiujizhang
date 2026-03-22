@@ -20,6 +20,7 @@ import { ImageUploader } from '@/components/ui/image-uploader';
 import { ImagePreviewDialog } from '@/components/ui/image-preview-dialog';
 import { Image as ImageIcon } from 'lucide-react';
 import { useUploadWithRetry } from '@/hooks/useUploadWithRetry';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 
 type CurrencyType = Database['public']['Enums']['currency_type'];
 type AccountType = Database['public']['Enums']['account_type'];
@@ -141,7 +142,7 @@ export function PaymentForm({ open, onOpenChange, projectId, projectCurrency, pa
         setRateInput('1.0000');
         return;
       }
-      const rate = await fetchLatestExchangeRate(currency, 'MYR');
+      const rate = await fetchLatestExchangeRate(currency, 'MYR', tenant?.id);
       if (rate) {
         const formattedRate = Number(rate.toFixed(4));
         setValue('exchange_rate', formattedRate);
@@ -395,7 +396,8 @@ export function PaymentForm({ open, onOpenChange, projectId, projectCurrency, pa
           <div className="flex justify-end gap-3 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{t('form.cancel')}</Button>
             <Button type="submit" disabled={loading || uploadingReceipt}>
-              {loading ? t('form.saving') : t('form.save')}
+              {loading && <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />}
+              {t('form.save')}
             </Button>
           </div>
         </form>

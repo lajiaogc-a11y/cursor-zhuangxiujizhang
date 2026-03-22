@@ -27,11 +27,11 @@ export function useProjects(
 /**
  * 单个项目查询 Hook
  */
-export function useProject(projectId: string | undefined) {
+export function useProject(tenantId: string | undefined, projectId: string | undefined) {
   return useQuery({
-    queryKey: [...queryKeys.projects, 'detail', projectId],
+    queryKey: [...queryKeys.projects, tenantId, 'detail', projectId],
     queryFn: () => projectsService.fetchProject(projectId!),
-    enabled: !!projectId,
+    enabled: !!tenantId && !!projectId,
   });
 }
 
@@ -56,7 +56,7 @@ export function useProjectsWithTransactions(
   statusFilter: string
 ) {
   return useQuery({
-    queryKey: [...queryKeys.projects, statusFilter, tenantId],
+    queryKey: [...queryKeys.projects, tenantId, statusFilter],
     queryFn: () => projectsService.fetchProjectsWithTransactions(tenantId!, statusFilter),
     enabled: !!tenantId,
   });
@@ -64,8 +64,11 @@ export function useProjectsWithTransactions(
 
 export function useRefreshProjects() {
   const qc = useQueryClient();
+  const { tenant } = useTenant();
+  const tid = tenant?.id;
   return () => {
-    qc.invalidateQueries({ queryKey: queryKeys.projects });
-    qc.invalidateQueries({ queryKey: queryKeys.dashboard });
+    if (!tid) return;
+    qc.invalidateQueries({ queryKey: [...queryKeys.projects, tid] });
+    qc.invalidateQueries({ queryKey: [...queryKeys.dashboard, tid] });
   };
 }

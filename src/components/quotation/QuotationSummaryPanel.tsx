@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Calculator, TrendingUp, Percent, ChevronUp, ChevronDown, RotateCcw, BookOpen, Tag } from 'lucide-react';
 import { QuotationSummary, CompanySettings, CostAnalysis, QuotationItem } from '@/types/quotation';
 import { Card, CardContent } from '@/components/ui/card';
@@ -17,6 +18,7 @@ import { useProductCategories } from '@/hooks/useProductCategories';
 import { useQuery } from '@tanstack/react-query';
 import { fetchQuotationNotesTemplates } from '@/services/admin.service';
 import { useAuth } from '@/lib/auth';
+import { useTenant } from '@/lib/tenant';
 import { useToast } from '@/hooks/use-toast';
 
 interface SummaryPanelProps {
@@ -38,6 +40,8 @@ export function QuotationSummaryPanel({
 }: SummaryPanelProps) {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { tenant } = useTenant();
+  const tenantId = tenant?.id;
   const [adjustmentType, setAdjustmentType] = React.useState<'increase' | 'decrease'>('increase');
   const [percentage, setPercentage] = React.useState<string>('10');
   const [scope, setScope] = React.useState<string>('all');
@@ -45,9 +49,9 @@ export function QuotationSummaryPanel({
 
   // Load note templates
   const { data: noteTemplates = [] } = useQuery({
-    queryKey: ['q_quotation_notes_templates'],
+    queryKey: ['q_quotation_notes_templates', tenantId],
     queryFn: fetchQuotationNotesTemplates,
-    enabled: !!user,
+    enabled: !!user && !!tenantId,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -285,7 +289,7 @@ export function QuotationSummaryPanel({
                   <Label className="text-xs font-medium flex items-center gap-1.5">
                     <BookOpen className="w-3.5 h-3.5" />选择备注模板
                   </Label>
-                  <a href="/quotation/templates" className="text-[10px] text-primary hover:underline">管理模板</a>
+                  <Link to="/quotation/templates" className="text-[10px] text-primary hover:underline">管理模板</Link>
                 </div>
                 <Select onValueChange={(templateId) => {
                   const tpl = noteTemplates.find((t: any) => t.id === templateId);

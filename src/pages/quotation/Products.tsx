@@ -7,7 +7,7 @@ import { Package, Plus, Pencil, Trash2, Search, Download, Upload, FileSpreadshee
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AppSectionLoading, ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useResponsive } from '@/hooks/useResponsive';
 import {
@@ -28,6 +28,7 @@ import { PRICE_TIER_LABELS, type Product } from '@/types/quotation';
 import { useI18n } from '@/lib/i18n';
 import { useSystemCurrency, CURRENCY_OPTIONS } from '@/hooks/useSystemCurrency';
 import { useAuth } from '@/lib/auth';
+import { useTenant } from '@/lib/tenant';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import * as XLSX from 'xlsx';
 
@@ -52,6 +53,8 @@ export default function ProductsPage() {
   const { toast } = useToast();
   const { t, language } = useI18n();
   const { user, userRole } = useAuth();
+  const { tenant } = useTenant();
+  const tenantId = tenant?.id;
   const { systemCurrency } = useSystemCurrency();
   const { isMobile, isTablet } = useResponsive();
   const [search, setSearch] = useState('');
@@ -66,9 +69,9 @@ export default function ProductsPage() {
   const isAdmin = userRole === 'admin';
 
   const { data: measurementUnits = [] } = useQuery({
-    queryKey: ['q_measurement_units'],
+    queryKey: ['q_measurement_units', tenantId],
     queryFn: () => fetchMeasurementUnits() as Promise<MeasurementUnit[]>,
-    enabled: !!user,
+    enabled: !!user && !!tenantId,
   });
 
   const getUnitLabel = (code: string) => {
@@ -343,7 +346,7 @@ export default function ProductsPage() {
         </div>
 
         {loading ? (
-          <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-12" />)}</div>
+          <AppSectionLoading label={t('common.loading')} compact />
         ) : filtered.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <Package className="w-12 h-12 mx-auto mb-3 opacity-30" />
@@ -562,7 +565,10 @@ export default function ProductsPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('common.cancel')}</Button>
             <Button onClick={handleSave} disabled={!editingProduct?.nameZh || addProduct.isPending || updateProduct.isPending}>
-              {addProduct.isPending || updateProduct.isPending ? t('qp.saving') : t('common.save')}
+              {(addProduct.isPending || updateProduct.isPending) && (
+                <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />
+              )}
+              {t('common.save')}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -8,7 +8,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
-import { Trash2, RefreshCw, Image, FileIcon, Loader2, X, AlertTriangle } from 'lucide-react';
+import { Trash2, RefreshCw, Image, FileIcon, X, AlertTriangle } from 'lucide-react';
+import { AppSectionLoading, ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { ImagePreviewDialog } from '@/components/ui/image-preview-dialog';
 import { receiptsService } from '@/services';
 import type { StorageFile } from '@/services/receipts.service';
@@ -128,7 +129,7 @@ export function ReceiptManagement() {
         </div>
 
         <div className="flex gap-2 mb-4">
-          <Button variant="outline" size="sm" onClick={fetchFiles} disabled={loading}><RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />{t('common.refresh')}</Button>
+          <Button variant="outline" size="sm" onClick={fetchFiles} disabled={loading}>{loading ? <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" /> : <RefreshCw className="w-4 h-4 mr-2" />}{t('common.refresh')}</Button>
           <Button variant="outline" size="sm" onClick={toggleSelectAll}>{selectedFiles.size === files.length ? t('receipt.deselectAll') : t('receipt.selectAll')}</Button>
           {orphanCount > 0 && <Button variant="outline" size="sm" onClick={toggleSelectOrphans}><AlertTriangle className="w-4 h-4 mr-2 text-warning" />{t('receipt.selectOrphans')} ({orphanCount})</Button>}
           {selectedFiles.size > 0 && <Button variant="destructive" size="sm" onClick={() => setConfirmDeleteOpen(true)} disabled={deleting}><Trash2 className="w-4 h-4 mr-2" />{t('receipt.deleteSelected')} ({selectedFiles.size})</Button>}
@@ -146,7 +147,7 @@ export function ReceiptManagement() {
         )}
 
         {loading ? (
-          <div className="flex items-center justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
+          <AppSectionLoading label={t('common.loading')} compact />
         ) : files.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">{t('receipt.noFiles')}</div>
         ) : (

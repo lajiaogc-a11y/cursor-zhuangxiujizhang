@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -16,6 +16,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { costService } from '@/services';
 import { useI18n } from '@/lib/i18n';
 import { useToast } from '@/hooks/use-toast';
+import { useTenant } from '@/lib/tenant';
 
 interface Props {
   methodId: string;
@@ -26,6 +27,8 @@ interface Props {
 export function MethodMaterialsDialog({ methodId, open, onOpenChange }: Props) {
   const { t } = useI18n();
   const { toast } = useToast();
+  const { tenant } = useTenant();
+  const tenantId = tenant?.id;
   const queryClient = useQueryClient();
   const [addOpen, setAddOpen] = useState(false);
   const [newMaterialId, setNewMaterialId] = useState('');
@@ -37,21 +40,21 @@ export function MethodMaterialsDialog({ methodId, open, onOpenChange }: Props) {
   const [roundingRule, setRoundingRule] = useState('');
 
   const { data: method } = useQuery({
-    queryKey: ['q_method_info', methodId],
+    queryKey: ['q_method_info', tenantId, methodId],
     queryFn: () => costService.fetchMethodInfo(methodId),
-    enabled: !!methodId && open,
+    enabled: !!methodId && open && !!tenantId,
   });
 
   const { data: methodMaterials = [], isLoading } = useQuery({
-    queryKey: ['q_method_materials', methodId],
+    queryKey: ['q_method_materials', tenantId, methodId],
     queryFn: () => costService.fetchMethodMaterials(methodId),
-    enabled: !!methodId && open,
+    enabled: !!methodId && open && !!tenantId,
   });
 
   const { data: materials = [] } = useQuery({
-    queryKey: ['q_materials_mm_select'],
+    queryKey: ['q_materials_mm_select', tenantId],
     queryFn: () => costService.fetchMaterialsSelect(),
-    enabled: addOpen,
+    enabled: addOpen && !!tenantId,
   });
 
   const addMaterial = useMutation({
@@ -59,8 +62,8 @@ export function MethodMaterialsDialog({ methodId, open, onOpenChange }: Props) {
       materialId: newMaterialId, quantityPerUnit, pricingUnit, notes, isAdjustable, adjustableDesc, roundingRule,
     }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['q_method_materials', methodId] });
-      queryClient.invalidateQueries({ queryKey: ['q_methods_with_materials_count'] });
+      queryClient.invalidateQueries({ queryKey: ['q_method_materials', tenantId, methodId] });
+      queryClient.invalidateQueries({ queryKey: ['q_methods_with_materials_count', tenantId] });
       toast({ title: t('mmd.materialAdded') });
       resetForm();
     },
@@ -70,8 +73,8 @@ export function MethodMaterialsDialog({ methodId, open, onOpenChange }: Props) {
   const deleteMaterial = useMutation({
     mutationFn: (id: string) => costService.deleteMethodMaterial(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['q_method_materials', methodId] });
-      queryClient.invalidateQueries({ queryKey: ['q_methods_with_materials_count'] });
+      queryClient.invalidateQueries({ queryKey: ['q_method_materials', tenantId, methodId] });
+      queryClient.invalidateQueries({ queryKey: ['q_methods_with_materials_count', tenantId] });
       toast({ title: t('mmd.deleted') });
     },
   });
@@ -104,7 +107,7 @@ export function MethodMaterialsDialog({ methodId, open, onOpenChange }: Props) {
           </div>
 
           {isLoading ? (
-            <div className="space-y-2">{[1, 2].map(i => <Skeleton key={i} className="h-14" />)}</div>
+            <AppSectionLoading label={t('common.loading')} compact />
           ) : methodMaterials.length === 0 ? (
             <p className="text-center py-6 text-sm text-muted-foreground">{t('mmd.noMaterials')}</p>
           ) : (

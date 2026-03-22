@@ -5,11 +5,12 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Building2, Users, Database, Activity } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 
 type TenantUsage = adminService.TenantUsage;
 
 export function TenantUsageStats() {
-  const { language } = useI18n();
+  const { language, t } = useI18n();
   const zh = language === 'zh';
 
   const { data: usageData = [], isLoading } = useQuery({
@@ -77,7 +78,7 @@ export function TenantUsageStats() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <p className="text-sm text-muted-foreground text-center py-8">{zh ? '加载中...' : 'Loading...'}</p>
+            <AppSectionLoading label={t('common.loading')} compact />
           ) : (
             <div className="rounded-md border overflow-x-auto">
               <Table>
@@ -92,25 +93,25 @@ export function TenantUsageStats() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {usageData.map(t => (
-                    <TableRow key={t.id}>
+                  {usageData.map(row => (
+                    <TableRow key={row.id}>
                       <TableCell>
                         <div>
-                          <p className="text-sm font-medium">{t.name}</p>
-                          <p className="text-[11px] text-muted-foreground">{t.slug}</p>
+                          <p className="text-sm font-medium">{row.name}</p>
+                          <p className="text-[11px] text-muted-foreground">{row.slug}</p>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="text-[10px]">{t.plan}</Badge>
+                        <Badge variant="outline" className="text-[10px]">{row.plan}</Badge>
                       </TableCell>
-                      <TableCell className="text-right font-mono text-sm">{t.memberCount}</TableCell>
+                      <TableCell className="text-right font-mono text-sm">{row.memberCount}</TableCell>
                       <TableCell className="text-right font-mono text-sm">
-                        <span className={t.activeUsers24h > 0 ? 'text-success' : 'text-muted-foreground'}>
-                          {t.activeUsers24h}
+                        <span className={row.activeUsers24h > 0 ? 'text-success' : 'text-muted-foreground'}>
+                          {row.activeUsers24h}
                         </span>
                       </TableCell>
-                      <TableCell className="text-right font-mono text-sm">{t.transactionCount}</TableCell>
-                      <TableCell className="text-right font-mono text-sm">{t.projectCount}</TableCell>
+                      <TableCell className="text-right font-mono text-sm">{row.transactionCount}</TableCell>
+                      <TableCell className="text-right font-mono text-sm">{row.projectCount}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -48,15 +48,15 @@ export default function CategoryMappingPage() {
   });
 
   const { data: categories = [] } = useQuery({
-    queryKey: ['q_product_categories_select'],
+    queryKey: ['q_product_categories_select', tenantId],
     queryFn: () => costService.fetchProductCategories(),
-    enabled: !!user,
+    enabled: !!user && !!tenantId,
   });
 
   const { data: methods = [] } = useQuery({
-    queryKey: ['q_methods_select'],
+    queryKey: ['q_methods_select', tenantId],
     queryFn: () => costService.fetchMethodsSelect(),
-    enabled: !!user,
+    enabled: !!user && !!tenantId,
   });
 
   // Build parent name lookup
@@ -108,7 +108,7 @@ export default function CategoryMappingPage() {
     mutationFn: async ({ categoryId, methodIds }: { categoryId: string; methodIds: string[] }) =>
       costService.saveCategoryMethods(categoryId, methodIds, user?.id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['q_category_method_mapping'] });
+      queryClient.invalidateQueries({ queryKey: ['q_category_method_mapping', tenantId] });
       toast({ title: t('cost.saved') });
       setDialogOpen(false);
     },
@@ -118,7 +118,7 @@ export default function CategoryMappingPage() {
   const deleteAllMappings = useMutation({
     mutationFn: (categoryId: string) => costService.deleteCategoryMappings(categoryId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['q_category_method_mapping'] });
+      queryClient.invalidateQueries({ queryKey: ['q_category_method_mapping', tenantId] });
       toast({ title: t('cost.deleted') });
       setDeleteCategoryId(null);
     },
@@ -247,7 +247,7 @@ export default function CategoryMappingPage() {
           <Input placeholder={t('cost.searchCategoryMethod')} value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
         </div>
 
-        {loadingMappings ? <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-16" />)}</div>
+        {loadingMappings ? <AppSectionLoading label={t('common.loading')} compact />
         : filtered.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <Package className="w-12 h-12 mx-auto mb-3 opacity-30" />

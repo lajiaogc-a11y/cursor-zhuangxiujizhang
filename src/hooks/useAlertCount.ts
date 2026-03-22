@@ -17,12 +17,14 @@ export function useAlertCount() {
   });
 
   useEffect(() => {
+    if (!tenantId) return;
+    const alertKey = [...queryKeys.alertCount, tenantId] as const;
     const unsubscribe = subscribeToTable('alert-count-changes', 'project_alerts', () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.alertCount });
+      queryClient.invalidateQueries({ queryKey: alertKey });
     });
 
     return unsubscribe;
-  }, [queryClient]);
+  }, [queryClient, tenantId]);
 
   return count;
 }

@@ -8,12 +8,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Sidebar } from '@/components/layout/Sidebar';
-import { ArrowLeft, User, Mail, Lock, Save, Loader2, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, User, Mail, Lock, Save, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { useNavigate } from 'react-router-dom';
 
 export default function Profile() {
   const { user } = useAuth();
-  const { language } = useI18n();
+  const { language, t } = useI18n();
   const { toast } = useToast();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -78,7 +80,7 @@ export default function Profile() {
   const labelClass = "text-sm font-medium text-foreground";
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <Sidebar />
       <main className="lg:ml-64 pt-14 lg:pt-0">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 animate-fade-in">
@@ -94,9 +96,7 @@ export default function Profile() {
           </div>
 
           {isLoading ? (
-            <div className="flex items-center justify-center py-20">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-            </div>
+            <AppSectionLoading label={t('common.loading')} compact className="py-20 min-h-[240px]" />
           ) : (
             <div className="space-y-6">
               {/* Profile Card */}
@@ -139,7 +139,7 @@ export default function Profile() {
 
                 <div className="flex justify-end pt-2">
                   <Button onClick={handleSaveProfile} disabled={saving} className="gap-2">
-                    {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                    {saving ? <ChromeLoadingSpinner variant="muted" className="h-4 w-4" /> : <Save className="w-4 h-4" />}
                     {language === 'zh' ? '保存资料' : 'Save Profile'}
                   </Button>
                 </div>
@@ -178,7 +178,7 @@ export default function Profile() {
 
                 <div className="flex justify-end pt-2">
                   <Button onClick={handleChangePassword} disabled={changingPassword || !newPassword} variant="outline" className="gap-2">
-                    {changingPassword ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
+                    {changingPassword ? <ChromeLoadingSpinner variant="muted" className="h-4 w-4" /> : <Lock className="w-4 h-4" />}
                     {language === 'zh' ? '修改密码' : 'Change Password'}
                   </Button>
                 </div>

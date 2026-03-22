@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useI18n } from '@/lib/i18n';
-import { Loader2, ShieldAlert, Globe, Mail, Lock, User, KeyRound, Eye, EyeOff, Building2, BarChart3, Receipt, Wallet } from 'lucide-react';
+import { ShieldAlert, Globe, Mail, Lock, User, KeyRound, Eye, EyeOff, Building2, BarChart3, Receipt, Wallet } from 'lucide-react';
+import { AppChromeLoading, ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { z } from 'zod';
 import { checkLoginLockout, recordLoginAttempt, useInvitationCode, sendPasswordResetEmail } from '@/services/base';
 import companyLogo from '@/assets/company-logo.png';
@@ -41,11 +42,7 @@ export default function Auth() {
   });
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
+    return <AppChromeLoading label={t('common.loading')} />;
   }
 
   if (user) {
@@ -140,7 +137,7 @@ export default function Auth() {
 
   return (
     <>
-      <div className="min-h-screen flex bg-background">
+      <div className="min-h-dvh flex bg-background">
         {/* Left panel — brand showcase */}
         <div className="hidden lg:flex flex-col justify-between w-[480px] xl:w-[520px] bg-primary p-10 relative overflow-hidden">
           {/* Decorative elements */}
@@ -246,7 +243,7 @@ export default function Auth() {
                       </div>
                     </div>
                     <Button type="submit" className="w-full h-11 font-semibold" disabled={isSubmitting || !!lockoutMessage}>
-                      {isSubmitting ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t('auth.loggingIn')}</>) : t('auth.login')}
+                      {isSubmitting ? (<><ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />{t('auth.loggingIn')}</>) : t('auth.login')}
                     </Button>
                     <div className="text-center">
                       <button type="button" onClick={() => setShowForgotPassword(true)} className="text-[13px] text-muted-foreground hover:text-primary transition-colors">
@@ -290,7 +287,7 @@ export default function Auth() {
                       </div>
                     </div>
                     <Button type="submit" className="w-full h-11 font-semibold" disabled={isSubmitting}>
-                      {isSubmitting ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t('auth.registering')}</>) : t('auth.register')}
+                      {isSubmitting ? (<><ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />{t('auth.registering')}</>) : t('auth.register')}
                     </Button>
                   </form>
                 </TabsContent>
@@ -331,7 +328,7 @@ export default function Auth() {
                     {language === 'zh' ? '取消' : 'Cancel'}
                   </Button>
                   <Button className="flex-1" onClick={handleForgotPassword} disabled={forgotSubmitting}>
-                    {forgotSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : (language === 'zh' ? '发送链接' : 'Send Link')}
+                    {forgotSubmitting ? <ChromeLoadingSpinner variant="muted" className="h-4 w-4" /> : (language === 'zh' ? '发送链接' : 'Send Link')}
                   </Button>
                 </div>
               </div>

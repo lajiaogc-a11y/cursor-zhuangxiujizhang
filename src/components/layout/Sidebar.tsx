@@ -3,8 +3,9 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, Building2, Receipt, Bell, BarChart3, Settings,
   Menu, StickyNote, Wallet, Globe, FileText, Landmark, Contact,
-  Calculator, ClipboardCheck, Package, Moon, Sun, ChevronLeft, LogOut, Loader2,
+  Calculator, ClipboardCheck, Package, Moon, Sun, ChevronLeft, LogOut,
 } from 'lucide-react';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { useTheme } from 'next-themes';
 import { useAuth } from '@/lib/auth';
 import { useAlertCount } from '@/hooks/useAlertCount';
@@ -210,7 +211,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
           <AlertDialogFooter>
             <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleSignOut} disabled={isSigningOut} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {isSigningOut && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {isSigningOut && <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />}
               {t('auth.logout')}
             </AlertDialogAction>
           </AlertDialogFooter>

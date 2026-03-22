@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AppChromeLoading, ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -15,11 +15,12 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import {
-  ArrowLeft, Truck, Plus, Package, Loader2, CheckCircle, Camera, Image,
+  ArrowLeft, Truck, Plus, Package, CheckCircle, Camera, Image,
 } from 'lucide-react';
 import { purchasingService } from '@/services';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/auth';
+import { useTenant } from '@/lib/tenant';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useQPurchaseOrders } from '@/hooks/useQPurchaseOrders';
 import { useI18n } from '@/lib/i18n';
@@ -41,6 +42,8 @@ export default function ReceivingPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { tenant } = useTenant();
+  const tenantId = tenant?.id;
   const isMobile = useIsMobile();
   const { logAudit } = useQPurchaseOrders();
   const { t } = useI18n();
@@ -54,9 +57,9 @@ export default function ReceivingPage() {
   const [receivingPhotos, setReceivingPhotos] = useState<File[]>([]);
 
   const { data, isLoading: loading } = useQuery({
-    queryKey: ['purchaseReceiving', orderId],
+    queryKey: ['purchaseReceiving', tenantId, orderId],
     queryFn: () => purchasingService.fetchReceivingPageData(orderId!),
-    enabled: !!orderId && !!user,
+    enabled: !!orderId && !!user && !!tenantId,
   });
 
   const orderNo = data?.orderNo ?? '';
@@ -90,17 +93,19 @@ export default function ReceivingPage() {
       await logAudit(orderId!, 'received', `${t('recv.title')} ${receivingNo} - ${validLines.length} ${t('recv.items')}`);
       toast({ title: t('recv.receivingRecorded'), description: `${t('recv.receivingNo')}: ${receivingNo}` });
       setDialogOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['purchaseReceiving', orderId] });
+      queryClient.invalidateQueries({ queryKey: ['purchaseReceiving', tenantId, orderId] });
+      queryClient.invalidateQueries({ queryKey: ['orderDetail', tenantId, orderId] });
+      queryClient.invalidateQueries({ queryKey: ['q_purchase_orders', tenantId] });
     } catch (error: any) {
       toast({ title: t('recv.receivingFailed'), description: error.message, variant: 'destructive' });
     } finally { setSaving(false); }
   };
 
   const allReceived = poItems.every(i => i.remainingQty <= 0);
-  if (loading) return <div className="min-h-screen bg-background p-6"><Skeleton className="h-8 w-48 mb-4" /><Skeleton className="h-64 w-full" /></div>;
+  if (loading) return <AppChromeLoading label={t('common.loading')} />;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <header className="border-b bg-card sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -279,7 +284,7 @@ export default function ReceivingPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('common.cancel')}</Button>
-            <Button onClick={handleSaveReceiving} disabled={saving}>{saving && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}{t('recv.confirmReceiving')}</Button>
+            <Button onClick={handleSaveReceiving} disabled={saving}>{saving && <ChromeLoadingSpinner variant="muted" className="mr-1 h-4 w-4" />}{t('recv.confirmReceiving')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

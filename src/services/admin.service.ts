@@ -1342,29 +1342,55 @@ export async function invokeAICategorize(description: string, transactionType: s
 // System Currency
 // ══════════════════════════════════════
 
-export async function fetchSystemCurrency() {
+export async function fetchSystemCurrency(tenantId: string) {
   const { data, error } = await (supabase as any)
     .from('q_company_settings')
     .select('system_currency, currency_scopes')
+    .eq('tenant_id', tenantId)
+    .maybeSingle();
+  if (!error && data) {
+    return {
+      currency: data.system_currency || 'MYR',
+      scopes: data.currency_scopes || ['all'],
+    };
+  }
+  const { data: legacy, error: legacyErr } = await (supabase as any)
+    .from('q_company_settings')
+    .select('system_currency, currency_scopes')
     .limit(1)
-    .single();
-  if (error || !data) return { currency: 'MYR', scopes: ['all'] };
+    .maybeSingle();
+  if (legacyErr || !legacy) return { currency: 'MYR', scopes: ['all'] };
   return {
-    currency: data.system_currency || 'MYR',
-    scopes: data.currency_scopes || ['all'],
+    currency: legacy.system_currency || 'MYR',
+    scopes: legacy.currency_scopes || ['all'],
   };
 }
 
-export async function updateSystemCurrencySettings(currency: string, scopes: string[]) {
-  const { data: existing } = await (supabase as any)
+export async function updateSystemCurrencySettings(currency: string, scopes: string[], tenantId: string) {
+  const { data: row } = await (supabase as any)
+    .from('q_company_settings')
+    .select('id')
+    .eq('tenant_id', tenantId)
+    .maybeSingle();
+  if (row?.id) {
+    const { error } = await (supabase as any)
+      .from('q_company_settings')
+      .update({ system_currency: currency, currency_scopes: scopes })
+      .eq('id', row.id);
+    if (error) throw error;
+    return;
+  }
+  const { data: legacy } = await (supabase as any)
     .from('q_company_settings')
     .select('id')
     .limit(1)
     .maybeSingle();
-  const targetId = existing?.id || '00000000-0000-0000-0000-000000000001';
+  const targetId = legacy?.id;
+  if (!targetId) throw new Error('No company settings row to update');
   const { error } = await (supabase as any)
     .from('q_company_settings')
-    .upsert({ id: targetId, system_currency: currency, currency_scopes: scopes }, { onConflict: 'id' });
+    .update({ system_currency: currency, currency_scopes: scopes })
+    .eq('id', targetId);
   if (error) throw error;
 }
 
@@ -1541,15 +1567,22 @@ export async function saveColumnSettingsToDB(userId: string, storageKey: string,
 // Exchange Rate Lookup (for forms)
 // ══════════════════════════════════════
 
-export async function fetchLatestExchangeRate(fromCurrency: string, toCurrency: string): Promise<number | null> {
-  const { data } = await supabase
+export async function fetchLatestExchangeRate(
+  fromCurrency: string,
+  toCurrency: string,
+  tenantId?: string | null
+): Promise<number | null> {
+  let q = supabase
     .from('exchange_rates')
     .select('rate')
     .eq('from_currency', fromCurrency as any)
     .eq('to_currency', toCurrency as any)
     .order('rate_date', { ascending: false })
-    .limit(1)
-    .single();
+    .limit(1);
+  if (tenantId) {
+    q = q.eq('tenant_id', tenantId);
+  }
+  const { data } = await q.maybeSingle();
   return data?.rate ?? null;
 }
 
@@ -1557,10 +1590,11 @@ export async function fetchLatestExchangeRate(fromCurrency: string, toCurrency: 
 // Global Exchange Rates
 // ══════════════════════════════════════
 
-export async function fetchGlobalExchangeRates() {
+export async function fetchGlobalExchangeRates(tenantId: string) {
   const { data, error } = await supabase
     .from('exchange_rates')
     .select('from_currency, to_currency, rate')
+    .eq('tenant_id', tenantId)
     .order('rate_date', { ascending: false })
     .order('created_at', { ascending: false })
     .limit(20);

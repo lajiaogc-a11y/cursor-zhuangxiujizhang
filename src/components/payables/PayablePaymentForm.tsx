@@ -13,6 +13,7 @@ import { useTenant } from '@/lib/tenant';
 import { toast } from 'sonner';
 import { ImageUploader } from '@/components/ui/image-uploader';
 import { useUploadWithRetry } from '@/hooks/useUploadWithRetry';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 
 interface PayablePaymentFormProps {
   open: boolean;
@@ -184,7 +185,8 @@ export function PayablePaymentForm({ open, onOpenChange, onSuccess, payable }: P
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
             <Button onClick={handleSubmit} disabled={loading || uploadingReceipt}>
-              {loading ? t('common.loading') : t('common.confirm')}
+              {loading && <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />}
+              {t('common.confirm')}
             </Button>
           </div>
         </div>

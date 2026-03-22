@@ -6,23 +6,26 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { costService } from '@/services';
 import { useAuth } from '@/lib/auth';
+import { useTenant } from '@/lib/tenant';
 import { useToast } from '@/hooks/use-toast';
 import { useI18n } from '@/lib/i18n';
 
 export default function TaxSettingsPage() {
   const { user } = useAuth();
+  const { tenant } = useTenant();
+  const tenantId = tenant?.id;
   const { toast } = useToast();
   const { t } = useI18n();
   const queryClient = useQueryClient();
 
   const { data: settings, isLoading } = useQuery({
-    queryKey: ['q_company_settings_tax'],
+    queryKey: ['q_company_settings_tax', tenantId],
     queryFn: () => costService.fetchTaxSettings(),
-    enabled: !!user,
+    enabled: !!user && !!tenantId,
   });
 
   const [form, setForm] = useState<any>(null);
@@ -36,8 +39,8 @@ export default function TaxSettingsPage() {
   const save = useMutation({
     mutationFn: () => costService.saveTaxSettings(form, user?.id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['q_company_settings_tax'] });
-      queryClient.invalidateQueries({ queryKey: ['q_company_settings'] });
+      queryClient.invalidateQueries({ queryKey: ['q_company_settings_tax', tenantId] });
+      queryClient.invalidateQueries({ queryKey: ['q_company_settings', tenantId] });
       toast({ title: t('cost.settingsSaved') });
     },
     onError: (e: any) => toast({ title: t('cost.saveFailed'), description: e.message, variant: 'destructive' }),
@@ -45,7 +48,7 @@ export default function TaxSettingsPage() {
 
   if (isLoading || !form) return (
     <MobilePageShell title={t('cost.taxSettings')} icon={<Percent className="w-5 h-5" />} backTo="/cost">
-      <div className="p-4 space-y-4">{[1,2,3].map(i => <Skeleton key={i} className="h-24" />)}</div>
+      <AppSectionLoading label={t('common.loading')} />
     </MobilePageShell>
   );
 

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { MobilePageShell } from '@/components/layout/MobilePageShell';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { BookOpen, Plus, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,20 +40,21 @@ export default function TemplatesPage() {
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   const { tenant } = useTenant();
+  const tenantId = tenant?.id;
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editing, setEditing] = useState<Partial<Template> & { id?: string }>({});
 
   const { data: templates = [], isLoading } = useQuery({
-    queryKey: ['q_quotation_notes_templates'],
+    queryKey: ['q_quotation_notes_templates', tenantId],
     queryFn: () => qService.fetchNotesTemplates() as Promise<Template[]>,
-    enabled: !!user,
+    enabled: !!user && !!tenantId,
   });
 
   const save = useMutation({
     mutationFn: (tpl: Partial<Template> & { id?: string }) => qService.saveNotesTemplate(tpl, user?.id, tenant?.id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['q_quotation_notes_templates'] });
+      queryClient.invalidateQueries({ queryKey: ['q_quotation_notes_templates', tenantId] });
       toast({ title: t('tpl.saved') });
       setDialogOpen(false);
     },
@@ -63,7 +65,7 @@ export default function TemplatesPage() {
     mutationFn: ({ id, isDefault }: { id: string; isDefault: boolean }) =>
       qService.toggleTemplateDefault(id, isDefault, user?.id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['q_quotation_notes_templates'] });
+      queryClient.invalidateQueries({ queryKey: ['q_quotation_notes_templates', tenantId] });
       toast({ title: t('common.success') });
     },
     onError: (e: any) => toast({ title: t('common.error'), description: e.message, variant: 'destructive' }),
@@ -72,7 +74,7 @@ export default function TemplatesPage() {
   const del = useMutation({
     mutationFn: (id: string) => qService.deleteNotesTemplate(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['q_quotation_notes_templates'] });
+      queryClient.invalidateQueries({ queryKey: ['q_quotation_notes_templates', tenantId] });
       toast({ title: t('tpl.deleted') });
       setDeleteId(null);
     },
@@ -159,7 +161,7 @@ export default function TemplatesPage() {
       headerActions={<Button size="sm" className="h-8 gap-1" onClick={() => { setEditing({}); setDialogOpen(true); }}><Plus className="w-4 h-4" /> {t('common.add')}</Button>}>
       <div className="container mx-auto px-4 py-4 sm:py-6 space-y-4">
         {isLoading ? (
-          <div className="space-y-3">{[1,2].map(i => <div key={i} className="h-12 bg-muted animate-pulse rounded-lg" />)}</div>
+          <AppSectionLoading label={t('common.loading')} compact />
         ) : templates.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-30" />

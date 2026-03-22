@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { SortableTableHead } from '@/components/ui/sortable-table-head';
 import { useSortableTable } from '@/hooks/useSortableTable';
@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { purchasingService } from '@/services';
 import { useAuth } from '@/lib/auth';
+import { useTenant } from '@/lib/tenant';
 import { useToast } from '@/hooks/use-toast';
 import { useI18n } from '@/lib/i18n';
 import { useResponsive } from '@/hooks/useResponsive';
@@ -21,6 +22,8 @@ import { format } from 'date-fns';
 
 export default function InventoryPage() {
   const { user } = useAuth();
+  const { tenant } = useTenant();
+  const tenantId = tenant?.id;
   const { toast } = useToast();
   const { t } = useI18n();
   const queryClient = useQueryClient();
@@ -36,22 +39,22 @@ export default function InventoryPage() {
   const { sortConfig, requestSort, sortData } = useSortableTable<any>();
 
   const { data: inventory = [], isLoading } = useQuery({
-    queryKey: ['q_inventory'],
+    queryKey: ['q_inventory', tenantId],
     queryFn: () => purchasingService.fetchInventory(),
-    enabled: !!user,
+    enabled: !!user && !!tenantId,
   });
 
   const { data: historyTxs = [] } = useQuery({
-    queryKey: ['q_inventory_transactions', historyMaterialId],
+    queryKey: ['q_inventory_transactions', tenantId, historyMaterialId],
     queryFn: () => purchasingService.fetchInventoryTransactions(historyMaterialId!),
-    enabled: !!historyMaterialId && historyOpen,
+    enabled: !!tenantId && !!historyMaterialId && historyOpen,
   });
 
   const adjustMutation = useMutation({
     mutationFn: () => purchasingService.adjustInventory(adjusting, adjustType, adjustQty, adjustNotes, user?.id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['q_inventory'] });
-      queryClient.invalidateQueries({ queryKey: ['q_inventory_transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['q_inventory', tenantId] });
+      queryClient.invalidateQueries({ queryKey: ['q_inventory_transactions', tenantId] });
       toast({ title: t('inv.adjusted') });
       setAdjustOpen(false);
     },
@@ -176,7 +179,7 @@ export default function InventoryPage() {
           <Input placeholder={t('inv.searchMaterial')} value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
         </div>
 
-        {isLoading ? <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-20" />)}</div>
+        {isLoading ? <AppSectionLoading label={t('common.loading')} compact />
         : filtered.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <Warehouse className="w-12 h-12 mx-auto mb-3 opacity-30" />

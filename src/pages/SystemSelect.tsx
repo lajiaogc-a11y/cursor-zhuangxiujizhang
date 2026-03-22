@@ -6,10 +6,11 @@ import { useI18n } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import {
   FileText, BarChart3, ShoppingCart, Wallet, Settings, LogOut,
-  Globe, Moon, Sun, Loader2, ChevronRight, Plus,
+  Globe, Moon, Sun, ChevronRight, Plus,
   ClipboardList, Receipt, TrendingUp, FolderOpen, Briefcase,
   ArrowUpRight, ShieldCheck, Users, HardHat,
 } from 'lucide-react';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { useTheme } from 'next-themes';
 import { useTenant } from '@/lib/tenant';
 import { TenantSwitcher } from '@/components/tenant/TenantSwitcher';
@@ -127,7 +128,7 @@ export default function SystemSelect() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       {/* ===== Header ===== */}
       <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-xl">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
@@ -306,7 +307,7 @@ export default function SystemSelect() {
           <AlertDialogFooter>
             <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleSignOut} disabled={isSigningOut} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {isSigningOut && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {isSigningOut && <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />}
               {t('auth.logout')}
             </AlertDialogAction>
           </AlertDialogFooter>

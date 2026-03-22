@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -43,15 +43,15 @@ export default function MethodLaborPage() {
   });
 
   const { data: methods = [] } = useQuery({
-    queryKey: ['q_methods_select'],
+    queryKey: ['q_methods_select', tenantId],
     queryFn: () => costService.fetchMethodsSelect(),
-    enabled: !!user,
+    enabled: !!user && !!tenantId,
   });
 
   const { data: workerTypes = [] } = useQuery({
-    queryKey: ['q_worker_types_select'],
+    queryKey: ['q_worker_types_select', tenantId],
     queryFn: () => costService.fetchWorkerTypesSelect(),
-    enabled: !!user,
+    enabled: !!user && !!tenantId,
   });
 
   const filtered = rates.filter(r =>
@@ -60,13 +60,21 @@ export default function MethodLaborPage() {
 
   const save = useMutation({
     mutationFn: async (r: any) => costService.saveLaborRate(r, user?.id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['q_labor_rates'] }); toast({ title: t('cost.saved') }); setDialogOpen(false); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['q_labor_rates', tenantId] });
+      queryClient.invalidateQueries({ queryKey: ['q_labor_rates_all', tenantId] });
+      toast({ title: t('cost.saved') }); setDialogOpen(false);
+    },
     onError: (e: any) => toast({ title: t('cost.saveFailed'), description: e.message, variant: 'destructive' }),
   });
 
   const del = useMutation({
     mutationFn: (id: string) => costService.deleteLaborRate(id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['q_labor_rates'] }); toast({ title: t('cost.deleted') }); setDeleteId(null); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['q_labor_rates', tenantId] });
+      queryClient.invalidateQueries({ queryKey: ['q_labor_rates_all', tenantId] });
+      toast({ title: t('cost.deleted') }); setDeleteId(null);
+    },
   });
 
   const handleWorkerTypeChange = (v: string) => {
@@ -145,7 +153,7 @@ export default function MethodLaborPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input placeholder={t('cost.searchLaborRate')} value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
         </div>
-        {isLoading ? <div className="space-y-3">{[1,2].map(i => <Skeleton key={i} className="h-16" />)}</div>
+        {isLoading ? <AppSectionLoading label={t('common.loading')} compact />
         : filtered.length === 0 ? <div className="text-center py-12 text-muted-foreground"><Clock className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>{t('cost.noLaborRates')}</p></div>
         : <ResponsiveTable mobileView={mobileCards} desktopView={desktopTable} />}
       </div>

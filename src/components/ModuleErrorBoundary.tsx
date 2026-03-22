@@ -1,6 +1,7 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { spaNavigate } from '@/lib/spaNavigate';
 
 interface Props {
   children: ReactNode;
@@ -38,7 +39,7 @@ export class ModuleErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex items-center justify-center min-h-[60vh] p-6">
+        <div className="flex items-center justify-center min-h-[50dvh] sm:min-h-[55dvh] p-6 bg-background/80">
           <div className="max-w-sm w-full text-center space-y-4">
             <div className="mx-auto w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
               <AlertTriangle className="w-6 h-6 text-destructive" />
@@ -64,7 +65,14 @@ export class ModuleErrorBoundary extends Component<Props, State> {
                 <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
                 重试
               </Button>
-              <Button size="sm" variant="outline" onClick={() => window.location.href = '/'}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  this.setState({ hasError: false, error: null });
+                  spaNavigate('/');
+                }}
+              >
                 <Home className="w-3.5 h-3.5 mr-1.5" />
                 首页
               </Button>

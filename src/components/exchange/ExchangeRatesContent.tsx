@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, Plus, RefreshCw, Download, Loader2, Clock } from 'lucide-react';
+import { TrendingUp, Plus, RefreshCw, Download, Clock } from 'lucide-react';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ExchangeRateForm } from '@/components/exchange/ExchangeRateForm';
@@ -13,6 +14,8 @@ import { useAuth } from '@/lib/auth';
 import { useTenant } from '@/lib/tenant';
 import { queryKeys } from '@/lib/queryKeys';
 import { exchangesService } from '@/services';
+import { useExchangeRates } from '@/hooks/useExchangeService';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 
 type ExchangeRate = Tables<'exchange_rates'>;
 
@@ -26,10 +29,7 @@ export function ExchangeRatesContent() {
   const canEdit = hasPermission('feature.edit');
   const tenantId = tenant?.id;
 
-  const { data: rates = [], isLoading: loading } = useQuery({
-    queryKey: queryKeys.exchangeRates,
-    queryFn: () => exchangesService.fetchAllExchangeRates(),
-  });
+  const { data: rates = [], isLoading: loading } = useExchangeRates(tenantId);
 
   const [fetchingRates, setFetchingRates] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -54,7 +54,7 @@ export function ExchangeRatesContent() {
             description: `${t('toast.fetchSuccess')}: ${result.source === 'API' ? t('toast.realtimeAPI') : t('toast.referenceRate')}`,
           });
         }
-        queryClient.invalidateQueries({ queryKey: queryKeys.exchangeRates });
+        if (tenantId) queryClient.invalidateQueries({ queryKey: [...queryKeys.exchangeRates, tenantId] });
       } else {
         throw new Error(result?.error || t('toast.fetchRateFailed'));
       }
@@ -98,7 +98,7 @@ export function ExchangeRatesContent() {
   const handleSuccess = () => {
     setDialogOpen(false);
     setEditingRate(null);
-    queryClient.invalidateQueries({ queryKey: queryKeys.exchangeRates });
+    if (tenantId) queryClient.invalidateQueries({ queryKey: [...queryKeys.exchangeRates, tenantId] });
   };
 
   const handleCancel = () => {
@@ -131,10 +131,10 @@ export function ExchangeRatesContent() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => handleAutoFetchRates(false)} disabled={fetchingRates}>
-            {fetchingRates ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
+            {fetchingRates ? <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" /> : <Download className="w-4 h-4 mr-2" />}
             {t('exchangeRates.autoFetch')}
           </Button>
-          <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: queryKeys.exchangeRates })}>
+          <Button variant="outline" onClick={() => tenantId && queryClient.invalidateQueries({ queryKey: [...queryKeys.exchangeRates, tenantId] })}>
             <RefreshCw className="w-4 h-4 mr-2" />{t('common.refresh')}
           </Button>
           {canEdit && (
@@ -186,9 +186,9 @@ export function ExchangeRatesContent() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-12 text-muted-foreground">{t('common.loading')}</div>
+            <AppSectionLoading label={t('common.loading')} compact />
           ) : (
-            <ExchangeRateList rates={rates as any} onEdit={handleEdit} onRefresh={() => queryClient.invalidateQueries({ queryKey: queryKeys.exchangeRates })} canEdit={canEdit} />
+            <ExchangeRateList rates={rates as any} onEdit={handleEdit} onRefresh={() => tenantId && queryClient.invalidateQueries({ queryKey: [...queryKeys.exchangeRates, tenantId] })} canEdit={canEdit} />
           )}
         </CardContent>
       </Card>

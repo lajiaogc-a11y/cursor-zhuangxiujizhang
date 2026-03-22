@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Database } from '@/integrations/supabase/types';
 import { formatChineseAmount } from '@/lib/numberToChinese';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { ImageUploader } from '@/components/ui/image-uploader';
 import { ImagePreviewDialog } from '@/components/ui/image-preview-dialog';
 import { useUploadWithRetry } from '@/hooks/useUploadWithRetry';
@@ -199,7 +200,7 @@ export function TransactionForm({ open, onOpenChange, transaction, onSuccess, in
     }
     setFetchingRate(true);
     try {
-      const rate = await fetchLatestExchangeRate(currency);
+      const rate = await fetchLatestExchangeRate(currency, 'MYR', tenant?.id);
       if (rate) {
         setValue('exchange_rate', rate);
         setRateInput(rate.toString());
@@ -210,12 +211,12 @@ export function TransactionForm({ open, onOpenChange, transaction, onSuccess, in
     }
   };
 
-  // 仅在自动模式下，币种变化时获取汇率
+  // 仅在自动模式下，币种变化时获取汇率（租户切换后重新取当前组织汇率）
   useEffect(() => {
     if (useAutoRate) {
       fetchExchangeRate();
     }
-  }, [currency, useAutoRate]);
+  }, [currency, useAutoRate, tenant?.id]);
 
   // Check balance when expense amount changes
   useEffect(() => {
@@ -594,7 +595,7 @@ export function TransactionForm({ open, onOpenChange, transaction, onSuccess, in
                         disabled={fetchingRate}
                         className="h-6 w-6 p-0"
                       >
-                        <RefreshCw className={cn("w-4 h-4", fetchingRate && "animate-spin")} />
+                        {fetchingRate ? <ChromeLoadingSpinner variant="muted" className="h-4 w-4" /> : <RefreshCw className="h-4 w-4" />}
                       </Button>
                     )}
                   </Label>
@@ -696,7 +697,8 @@ export function TransactionForm({ open, onOpenChange, transaction, onSuccess, in
           <div className="flex justify-end gap-3 pt-4 border-t">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{t('form.cancel')}</Button>
             <Button type="submit" disabled={loading}>
-              {loading ? t('form.saving') : t('form.save')}
+              {loading && <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />}
+              {t('form.save')}
             </Button>
           </div>
         </form>

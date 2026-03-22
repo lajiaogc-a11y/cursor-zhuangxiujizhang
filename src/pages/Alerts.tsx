@@ -25,6 +25,7 @@ import {
   useAlertsData, useResolveAlert, useSaveRule,
   useToggleRule, useDeleteRule, useGenerateAlerts,
 } from '@/hooks/useAlertsService';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 
 type AlertRule = Database['public']['Tables']['alert_rules']['Row'];
 
@@ -52,8 +53,8 @@ export default function Alerts() {
   // ─── Mutations ──────────────────────────────────────
   const resolveMutation = useResolveAlert(tenantId);
   const saveMutation = useSaveRule(tenantId);
-  const toggleMutation = useToggleRule();
-  const deleteMutation = useDeleteRule();
+  const toggleMutation = useToggleRule(tenantId);
+  const deleteMutation = useDeleteRule(tenantId);
   const generateMutation = useGenerateAlerts();
 
   const handleResolveAlert = (alertId: string) => {
@@ -174,8 +175,12 @@ export default function Alerts() {
               <DropdownMenuContent align="end">
                 {canEdit && (
                   <DropdownMenuItem onClick={handleGenerateAlerts} disabled={generateMutation.isPending}>
-                    <Play className="w-4 h-4 mr-2" />
-                    {generateMutation.isPending ? t('common.loading') : t('common.refresh')}
+                    {generateMutation.isPending ? (
+                      <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />
+                    ) : (
+                      <Play className="w-4 h-4 mr-2" />
+                    )}
+                    {t('common.refresh')}
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem onClick={() => refetch()}>
@@ -187,8 +192,12 @@ export default function Alerts() {
             <div className="flex gap-2">
               {canEdit && (
                 <Button onClick={handleGenerateAlerts} disabled={generateMutation.isPending} variant="default">
-                  <Play className="w-4 h-4 mr-2" />
-                  {generateMutation.isPending ? t('common.loading') : t('common.refresh')}
+                  {generateMutation.isPending ? (
+                    <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />
+                  ) : (
+                    <Play className="w-4 h-4 mr-2" />
+                  )}
+                  {t('common.refresh')}
                 </Button>
               )}
               <Button variant="outline" onClick={() => refetch()}>

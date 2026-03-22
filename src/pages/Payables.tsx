@@ -19,8 +19,7 @@ import { AgingAnalysis } from '@/components/payables/AgingAnalysis';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { queryKeys, invalidationMap } from '@/lib/queryKeys';
-import { Skeleton } from '@/components/ui/skeleton';
+import { queryKeys, invalidationMap, invalidateQueriesWithTenant } from '@/lib/queryKeys';
 import { useTenant } from '@/lib/tenant';
 
 const formatCurrency = (amount: number, currency: string = 'MYR') => {
@@ -62,9 +61,7 @@ export default function Payables() {
   });
 
   const invalidatePayables = () => {
-    invalidationMap.payableMutation.forEach(key => {
-      queryClient.invalidateQueries({ queryKey: key });
-    });
+    invalidateQueriesWithTenant(queryClient, tenantId, invalidationMap.payableMutation);
   };
 
   const projectMap = useMemo(() => Object.fromEntries(projects.map(p => [p.id, p])), [projects]);

@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { MobilePageShell } from '@/components/layout/MobilePageShell';
 import { useI18n } from '@/lib/i18n';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { useAuth } from '@/lib/auth';
 import { useTenant } from '@/lib/tenant';
 import { workforceService } from '@/services';
@@ -16,7 +17,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { DateInput } from '@/components/ui/date-input';
-import { DollarSign, Calculator, FileDown, Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
+import { DollarSign, Calculator, FileDown, Plus, Pencil, Trash2 } from 'lucide-react';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { format } from 'date-fns';
 
 interface PayrollRecord {
@@ -97,19 +99,19 @@ export default function WorkforcePayroll() {
       base_pay: parseFloat(form.base_pay) || 0, overtime_pay: parseFloat(form.overtime_pay) || 0, deductions: parseFloat(form.deductions) || 0,
       bonuses: parseFloat(form.bonuses) || 0, net_pay: netPay, currency: form.currency, notes: form.notes.trim() || null, created_by: user?.id,
     }, editRecord?.id),
-    onSuccess: () => { toast({ title: editRecord ? t('common.updateSuccess') : t('common.addSuccess') }); queryClient.invalidateQueries({ queryKey: ['workforce-payroll'] }); setDialogOpen(false); resetForm(); },
+    onSuccess: () => { toast({ title: editRecord ? t('common.updateSuccess') : t('common.addSuccess') }); if (tenantId) queryClient.invalidateQueries({ queryKey: ['workforce-payroll', tenantId] }); setDialogOpen(false); resetForm(); },
     onError: (e: any) => toast({ title: t('common.error'), description: e.message, variant: 'destructive' }),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => workforceService.deletePayrollRecord(id),
-    onSuccess: () => { toast({ title: t('common.deleteSuccess') }); queryClient.invalidateQueries({ queryKey: ['workforce-payroll'] }); },
+    onSuccess: () => { toast({ title: t('common.deleteSuccess') }); if (tenantId) queryClient.invalidateQueries({ queryKey: ['workforce-payroll', tenantId] }); },
     onError: (e: any) => toast({ title: t('common.error'), description: e.message, variant: 'destructive' }),
   });
 
   const confirmMutation = useMutation({
     mutationFn: (id: string) => workforceService.confirmPayrollRecord(id),
-    onSuccess: () => { toast({ title: t('common.updateSuccess') }); queryClient.invalidateQueries({ queryKey: ['workforce-payroll'] }); },
+    onSuccess: () => { toast({ title: t('common.updateSuccess') }); if (tenantId) queryClient.invalidateQueries({ queryKey: ['workforce-payroll', tenantId] }); },
   });
 
   const calculateFromAttendance = async () => {
@@ -181,7 +183,7 @@ export default function WorkforcePayroll() {
             </TableRow></TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow><TableCell colSpan={9} className="text-center py-8"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={9} className="p-0"><AppSectionLoading label={t('common.loading')} compact /></TableCell></TableRow>
               ) : records.length === 0 ? (
                 <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">{t('wfPayroll.noRecords')}</TableCell></TableRow>
               ) : records.map((r: any) => (
@@ -245,7 +247,7 @@ export default function WorkforcePayroll() {
             <DialogFooter>
               <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('common.cancel')}</Button>
               <Button onClick={() => saveMutation.mutate()} disabled={!form.worker_id || !form.period_start || !form.period_end || saveMutation.isPending}>
-                {saveMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-1" />}{t('common.save')}
+                {saveMutation.isPending && <ChromeLoadingSpinner variant="muted" className="mr-1 h-4 w-4" />}{t('common.save')}
               </Button>
             </DialogFooter>
           </DialogContent>

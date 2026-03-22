@@ -11,6 +11,7 @@ import { useI18n } from '@/lib/i18n';
 import { useCompanySettings } from '@/hooks/useCompanySettings';
 import { toast } from '@/hooks/use-toast';
 import type { CompanySettings } from '@/types/quotation';
+import { AppChromeLoading, ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 
 export default function QuotationSettings() {
   const { t } = useI18n();
@@ -30,7 +31,7 @@ export default function QuotationSettings() {
     }
   };
 
-  if (loading) return null;
+  if (loading) return <AppChromeLoading label={t('common.loading')} />;
 
   return (
     <MobilePageShell
@@ -137,8 +138,12 @@ export default function QuotationSettings() {
         {/* Save Button */}
         <div className="mt-6 flex justify-end">
           <Button onClick={handleSave} disabled={updateSettings.isPending} className="min-w-[120px] gap-2">
-            <Save className="w-4 h-4" />
-            {updateSettings.isPending ? t('common.loading') : t('common.save')}
+            {updateSettings.isPending ? (
+              <ChromeLoadingSpinner variant="muted" className="h-4 w-4" />
+            ) : (
+              <Save className="w-4 h-4" />
+            )}
+            {t('common.save')}
           </Button>
         </div>
       </div>

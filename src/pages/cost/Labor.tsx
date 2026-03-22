@@ -5,12 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ResponsiveTable } from '@/components/ui/responsive-table';
 import { useQuery } from '@tanstack/react-query';
 import { costService } from '@/services';
 import { useAuth } from '@/lib/auth';
+import { useTenant } from '@/lib/tenant';
 import { useI18n } from '@/lib/i18n';
 import * as XLSX from 'xlsx';
 
@@ -35,21 +36,21 @@ export default function LaborPage() {
   const [search, setSearch] = useState('');
 
   const { data: breakdowns = [], isLoading: loadingBreakdowns } = useQuery({
-    queryKey: ['q_project_breakdowns_labor'],
+    queryKey: ['q_project_breakdowns_labor', tenantId],
     queryFn: () => costService.fetchBreakdownsForLabor(),
-    enabled: !!user,
+    enabled: !!user && !!tenantId,
   });
 
   const { data: allItems = [] } = useQuery({
-    queryKey: ['q_breakdown_items_all_labor'],
+    queryKey: ['q_breakdown_items_all_labor', tenantId],
     queryFn: () => costService.fetchAllBreakdownItemsForLabor(),
-    enabled: !!user,
+    enabled: !!user && !!tenantId,
   });
 
   const { data: laborRates = [] } = useQuery({
-    queryKey: ['q_labor_rates_all'],
+    queryKey: ['q_labor_rates_all', tenantId],
     queryFn: () => costService.fetchAllLaborRates(),
-    enabled: !!user,
+    enabled: !!user && !!tenantId,
   });
 
   const summaries = useMemo<LaborSummary[]>(() => {
@@ -106,7 +107,7 @@ export default function LaborPage() {
         </div>
 
         {loadingBreakdowns ? (
-          <div className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-24" />)}</div>
+          <AppSectionLoading label={t('common.loading')} compact />
         ) : filtered.length === 0 ? (
           <p className="text-center py-12 text-sm text-muted-foreground">{t('cost.noLaborData')}</p>
         ) : (

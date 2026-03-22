@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect, useCallback, forwardRef, useContext } from 'react';
-import { MessageCircle, X, Send, Bot, User, Loader2, Minimize2, Maximize2, GripHorizontal } from 'lucide-react';
+import { MessageCircle, X, Send, Bot, User, Minimize2, Maximize2, GripHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { getSessionToken, fetchFinancialContext } from '@/services/settings.service';
 import { useI18n } from '@/lib/i18n';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { TenantContext } from '@/lib/tenant';
 
 interface Message {
@@ -368,7 +369,7 @@ export const AIChatbot = forwardRef<HTMLDivElement, {}>(function AIChatbot(_prop
                     <Bot className="h-4 w-4 text-primary" />
                   </div>
                   <div className="bg-muted rounded-lg px-3 py-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <ChromeLoadingSpinner variant="muted" className="h-4 w-4" />
                   </div>
                 </div>
               )}
@@ -393,7 +394,7 @@ export const AIChatbot = forwardRef<HTMLDivElement, {}>(function AIChatbot(_prop
                 size="icon"
               >
                 {isLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <ChromeLoadingSpinner variant="muted" className="h-4 w-4" />
                 ) : (
                   <Send className="h-4 w-4" />
                 )}

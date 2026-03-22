@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useI18n } from '@/lib/i18n';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchAnalyticsSummary, clearOldAnalytics } from '@/services/admin.service';
 import { BarChart3, Trash2, RefreshCw } from 'lucide-react';
@@ -102,7 +103,7 @@ export default function AnalyticsDashboard() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="text-center py-8 text-muted-foreground">加载中...</div>
+              <AppSectionLoading label={t('common.loading')} compact />
             ) : summary.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">暂无分析数据</div>
             ) : (

@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { MobilePageShell } from '@/components/layout/MobilePageShell';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { useI18n } from '@/lib/i18n';
 import { useTenant } from '@/lib/tenant';
 import { useAuth } from '@/lib/auth';
@@ -73,7 +74,7 @@ export default function CRMAmendments() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contract_amendments'] });
+      queryClient.invalidateQueries({ queryKey: ['contract_amendments', tenantId] });
       setShowDialog(false);
       setForm({ contract_id: '', title: '', description: '', amount_change: '' });
       toast.success(t('common.createSuccess'));
@@ -86,8 +87,8 @@ export default function CRMAmendments() {
       await crmService.reviewAmendment(user!.id, id, status, reviewNote || null, contractId, newTotal);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contract_amendments'] });
-      queryClient.invalidateQueries({ queryKey: ['contracts'] });
+      queryClient.invalidateQueries({ queryKey: ['contract_amendments', tenantId] });
+      queryClient.invalidateQueries({ queryKey: ['contracts', tenantId] });
       setShowReviewDialog(false);
       setReviewingAmendment(null);
       setReviewNote('');
@@ -167,7 +168,7 @@ export default function CRMAmendments() {
 
         {/* Table */}
         {isLoading ? (
-          <div className="text-center py-12 text-muted-foreground">{t('common.loading')}</div>
+          <AppSectionLoading label={t('common.loading')} compact />
         ) : filtered.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16 text-muted-foreground">
@@ -255,7 +256,8 @@ export default function CRMAmendments() {
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setShowDialog(false)}>{t('common.cancel')}</Button>
                 <Button onClick={() => createMutation.mutate()} disabled={!form.contract_id || !form.title || createMutation.isPending}>
-                  {createMutation.isPending ? t('common.saving') : t('common.save')}
+                  {createMutation.isPending && <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />}
+                  {t('common.save')}
                 </Button>
               </div>
             </div>

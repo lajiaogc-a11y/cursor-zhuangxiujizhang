@@ -5,7 +5,7 @@ import { History, Plus, Search, FileText, Trash2, Eye, ChevronDown } from 'lucid
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -212,7 +212,7 @@ export default function HistoryPage() {
         </div>
 
         {loading ? (
-          <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-12" />)}</div>
+          <AppSectionLoading label={t('common.loading')} compact />
         ) : filtered.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />

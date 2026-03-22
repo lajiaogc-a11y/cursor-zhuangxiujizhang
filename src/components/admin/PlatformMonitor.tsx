@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Activity, AlertTriangle, ShieldAlert, Users, Clock, RefreshCw } from 'lucide-react';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { format, subDays } from 'date-fns';
 import { useI18n } from '@/lib/i18n';
 import { BarChart, Bar, XAxis, YAxis, AreaChart, Area } from 'recharts';
@@ -116,7 +117,7 @@ export function PlatformMonitor() {
       {/* Refresh button */}
       <div className="flex justify-end">
         <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing} className="gap-1.5">
-          <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+          {refreshing ? <ChromeLoadingSpinner variant="muted" className="h-3.5 w-3.5" /> : <RefreshCw className="h-3.5 w-3.5" />}
           {zh ? '刷新' : 'Refresh'}
         </Button>
       </div>

@@ -47,15 +47,27 @@ export async function fetchPeriodReport(
 ): Promise<PeriodReportData> {
   requireTenantId(tenantId);
 
-  const [txRes, sysCatRes, projCatRes] = await Promise.all([
-    supabase.from('transactions').select('*').eq('tenant_id', tenantId)
-      .gte('transaction_date', startDate).lte('transaction_date', endDate)
-      .order('transaction_date', { ascending: false }),
+  const [sysCatRes, projCatRes] = await Promise.all([
     supabase.from('transaction_categories').select('name, type').eq('tenant_id', tenantId).eq('is_active', true),
     supabase.from('project_categories').select('name, type').eq('tenant_id', tenantId).eq('is_active', true),
   ]);
 
-  const transactions = txRes.data || [];
+  // 分页取全量 transactions，避免默认 1000 行截断
+  const PAGE_SIZE = 1000;
+  let transactions: any[] = [];
+  let page = 0;
+  while (true) {
+    const { data, error } = await supabase.from('transactions').select('*')
+      .eq('tenant_id', tenantId)
+      .gte('transaction_date', startDate).lte('transaction_date', endDate)
+      .order('transaction_date', { ascending: false })
+      .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    transactions = transactions.concat(data);
+    if (data.length < PAGE_SIZE) break;
+    page++;
+  }
   const companyCategoryNames = new Set((sysCatRes.data || []).map(c => c.name));
   const projectCategoryNames = new Set((projCatRes.data || []).map(c => c.name));
 

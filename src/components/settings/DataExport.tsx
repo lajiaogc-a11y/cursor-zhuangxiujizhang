@@ -7,10 +7,10 @@ import { Progress } from '@/components/ui/progress';
 import { 
   Download, 
   Database, 
-  Loader2,
   FileJson,
   Package
 } from 'lucide-react';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { settingsService } from '@/services';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
@@ -237,7 +237,7 @@ export function DataExport() {
           <div className="space-y-2 p-4 bg-muted rounded-lg">
             <div className="flex items-center justify-between text-sm">
               <span className="flex items-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <ChromeLoadingSpinner variant="muted" className="h-4 w-4" />
                 {t('dataExport.exporting')}: {currentTable}
               </span>
               <span>{progress}%</span>
@@ -256,7 +256,7 @@ export function DataExport() {
           <Button onClick={handleExport} disabled={exporting}>
             {exporting ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />
                 {t('dataExport.exportingProgress')}
               </>
             ) : (

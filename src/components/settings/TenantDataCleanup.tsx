@@ -9,12 +9,13 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
-  Trash2, AlertTriangle, Database, Shield, Loader2,
+  Trash2, AlertTriangle, Database, Shield,
   CheckCircle2, XCircle, Square, FileText, BarChart3,
   ShoppingCart, Wallet, Users, HardHat,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
+import { AppSectionLoading, ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { useTenant } from '@/lib/tenant';
 import {
   fetchTenantModuleDataCounts,
@@ -259,10 +260,12 @@ export function TenantDataCleanup() {
 
         {/* Module grid */}
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-            <span className="ml-2 text-muted-foreground">{t('cleanup.counting')}</span>
-          </div>
+          <AppSectionLoading
+            label={t('cleanup.counting')}
+            description={t('cleanup.counting')}
+            compact
+            className="min-h-[160px] py-12"
+          />
         ) : (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -338,7 +341,7 @@ export function TenantDataCleanup() {
             )}
             <Button variant="destructive" disabled={selectedModules.length === 0 || cleaning} onClick={() => setShowConfirm(true)} className="gap-2">
               {cleaning ? (
-                <><Loader2 className="w-4 h-4 animate-spin" />{t('cleanup.cleaning')}</>
+                <><ChromeLoadingSpinner variant="muted" className="h-4 w-4" />{t('cleanup.cleaning')}</>
               ) : (
                 <><Trash2 className="w-4 h-4" />{t('cleanup.startCleanup')}</>
               )}

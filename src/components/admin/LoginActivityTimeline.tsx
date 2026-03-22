@@ -4,11 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { LogIn, CheckCircle2, XCircle, MapPin, Clock, Calendar } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { format, subDays, eachDayOfInterval } from 'date-fns';
 import { zhCN, enUS } from 'date-fns/locale';
 
 export function LoginActivityTimeline() {
-  const { language } = useI18n();
+  const { language, t } = useI18n();
   const zh = language === 'zh';
 
   const { data: recentLogins = [], isLoading } = useQuery({
@@ -175,7 +176,7 @@ export function LoginActivityTimeline() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <p className="text-sm text-muted-foreground text-center py-8">{zh ? '加载中...' : 'Loading...'}</p>
+            <AppSectionLoading label={t('common.loading')} compact />
           ) : recentLogins.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">{zh ? '暂无记录' : 'No records'}</p>
           ) : (

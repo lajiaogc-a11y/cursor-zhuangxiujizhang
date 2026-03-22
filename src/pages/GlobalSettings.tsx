@@ -25,6 +25,7 @@ import { useSystemCurrency, CURRENCY_OPTIONS, SystemCurrency, CurrencyScope } fr
 import { useGlobalExchangeRates } from '@/hooks/useGlobalExchangeRates';
 import { getCurrencySymbol } from '@/lib/formatCurrency';
 import { cn } from '@/lib/utils';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 
 function PasswordChangeCard() {
   const { t } = useI18n();
@@ -70,7 +71,8 @@ function PasswordChangeCard() {
           </div>
         </div>
         <Button onClick={handleChangePassword} disabled={saving || !newPassword || !confirmPassword}>
-          {saving ? t('common.loading') : t('password.change')}
+          {saving && <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />}
+          {t('password.change')}
         </Button>
       </CardContent>
     </Card>
@@ -227,7 +229,8 @@ function CurrencySettingCard() {
           </div>
 
           <Button onClick={handleSave} disabled={saving || !hasChanges}>
-            {saving ? t('common.loading') : t('common.save')}
+            {saving && <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />}
+            {t('common.save')}
           </Button>
         </CardContent>
       </Card>
@@ -348,7 +351,8 @@ export default function GlobalSettings() {
                   </div>
                 </div>
                 <Button onClick={handleSaveProfile} disabled={saving}>
-                  {saving ? t('common.loading') : t('globalSettings.saveProfile')}
+                  {saving && <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />}
+                  {t('globalSettings.saveProfile')}
                 </Button>
               </CardContent>
             </Card>

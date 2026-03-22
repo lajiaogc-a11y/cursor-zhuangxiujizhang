@@ -17,8 +17,8 @@ import { useI18n } from '@/lib/i18n';
 import { toast } from 'sonner';
 import { format, isPast, isToday, isTomorrow } from 'date-fns';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { queryKeys, invalidationMap } from '@/lib/queryKeys';
-import { Skeleton } from '@/components/ui/skeleton';
+import { queryKeys, invalidationMap, invalidateQueriesWithTenant } from '@/lib/queryKeys';
+import { AppSectionLoading, ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { useTenant } from '@/lib/tenant';
 import * as memosService from '@/services/memos.service';
 
@@ -45,9 +45,7 @@ export default function Memos() {
   });
 
   const invalidateMemos = () => {
-    invalidationMap.memoMutation.forEach(key => {
-      queryClient.invalidateQueries({ queryKey: key });
-    });
+    invalidateQueriesWithTenant(queryClient, tenantId, invalidationMap.memoMutation);
   };
 
   const saveMut = useMutation({
@@ -167,9 +165,7 @@ export default function Memos() {
         </div>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-lg" />)}
-          </div>
+          <AppSectionLoading label={t('common.loading')} className="min-h-[min(40dvh,20rem)]" />
         ) : filteredMemos.length === 0 ? (
           <Card><CardContent className="py-16 text-center text-muted-foreground">
             <StickyNote className="w-16 h-16 mx-auto mb-4 opacity-30" />
@@ -226,7 +222,10 @@ export default function Memos() {
               </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setFormOpen(false)}>{t('common.cancel')}</Button>
-                <Button onClick={handleSave} disabled={saveMut.isPending}>{saveMut.isPending ? t('common.loading') : t('common.save')}</Button>
+                <Button onClick={handleSave} disabled={saveMut.isPending}>
+                  {saveMut.isPending && <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />}
+                  {t('common.save')}
+                </Button>
               </div>
             </div>
           </DialogContent>

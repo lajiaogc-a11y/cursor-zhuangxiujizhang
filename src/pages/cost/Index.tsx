@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
-import { Skeleton } from '@/components/ui/skeleton';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { useAuth } from '@/lib/auth';
+import { useTenant } from '@/lib/tenant';
 import { useI18n } from '@/lib/i18n';
 import { useQuery } from '@tanstack/react-query';
 import { costService } from '@/services';
@@ -10,12 +11,14 @@ import { Package, Wrench, Calculator, Users, FileSpreadsheet, Clock, Percent, Ch
 export default function CostControlIndex() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { tenant } = useTenant();
+  const tenantId = tenant?.id;
   const { t } = useI18n();
 
   const { data: stats, isLoading } = useQuery({
-    queryKey: ['q-cost-control-stats'],
+    queryKey: ['q-cost-control-stats', tenantId],
     queryFn: () => costService.fetchCostControlStats(),
-    enabled: !!user,
+    enabled: !!user && !!tenantId,
     staleTime: 60_000,
   });
 
@@ -53,7 +56,11 @@ export default function CostControlIndex() {
               ))}
             </div>
           )}
-          {isLoading && <div className="h-12 mt-4" />}
+          {isLoading && (
+            <div className="flex justify-center mt-4 py-2 text-primary-foreground/90">
+              <ChromeLoadingSpinner variant="muted" className="h-6 w-6 text-inherit" />
+            </div>
+          )}
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {modules.map((module, i) => (

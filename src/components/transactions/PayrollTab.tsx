@@ -21,7 +21,7 @@ import { InsuranceList } from '@/components/payroll/InsuranceList';
 import { InsuranceForm } from '@/components/payroll/InsuranceForm';
 import { PayrollSettings } from '@/components/payroll/PayrollSettings';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { queryKeys, invalidationMap } from '@/lib/queryKeys';
+import { queryKeys, invalidationMap, invalidateQueriesWithTenant } from '@/lib/queryKeys';
 import { formatCompact } from '@/lib/formatCurrency';
 
 interface Employee {
@@ -76,7 +76,9 @@ export function PayrollTab() {
   });
 
   const isLoading = loadingEmployees;
-  const invalidatePayroll = () => { invalidationMap.payrollMutation.forEach(key => { queryClient.invalidateQueries({ queryKey: key }); }); };
+  const invalidatePayroll = () => {
+    invalidateQueriesWithTenant(queryClient, tenantId, invalidationMap.payrollMutation);
+  };
 
   const advancesWithEmployee = useMemo(() => advances.map(a => ({ ...a, employee: employees.find(e => e.id === a.employee_id) })), [advances, employees]);
   const paymentsWithEmployee = useMemo(() => payments.map(p => ({ ...p, employee: employees.find(e => e.id === p.employee_id) })), [payments, employees]);

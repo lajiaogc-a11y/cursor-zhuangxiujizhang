@@ -149,7 +149,10 @@ export default function Transactions() {
       const income = data.filter(t => t.type === 'income').reduce((sum, t) => sum + Number(t.amount_myr || 0), 0);
       const expense = data.filter(t => t.type === 'expense').reduce((sum, t) => sum + Number(t.amount_myr || 0), 0);
       
-      const cStats = calculateCurrencyStats(data.map(t => ({ type: t.type, currency: t.currency, account_type: t.account_type, amount: Number(t.amount || 0) })), initialBalances);
+      // company_accounts.balance 已包含全量流水累计，只传空 initialBalances 给 stats 计算
+      // （income/expense 取筛选期间值），balance 直接从 company_accounts 读取
+      const cStats = calculateCurrencyStats(data.map(t => ({ type: t.type, currency: t.currency, account_type: t.account_type, amount: Number(t.amount || 0) })));
+      cStats.forEach(s => { s.balance = initialBalances?.[s.currency]?.[s.accountType] || 0; });
       return { stats: { totalIncome: income, totalExpense: expense }, perCurrencyStats: perCurrency, currencyStats: cStats, initialBalances };
     },
     enabled: !!tenantId && (activeTab === 'transactions' || activeTab === 'overview'),
@@ -263,7 +266,7 @@ export default function Transactions() {
           const formData = await fetchTransactionFormData(tenantId, undefined);
           const latestRates: Array<{ from_currency: string; rate: number }> = [];
           for (const cur of ['CNY', 'USD'] as const) {
-            const rate = await fetchLatestExchangeRate(cur);
+            const rate = await fetchLatestExchangeRate(cur, 'MYR', tenantId);
             if (rate) latestRates.push({ from_currency: cur, rate });
           }
 
@@ -291,6 +294,19 @@ export default function Transactions() {
           const projectMap: Record<string, string> = {};
           (formData.projects || []).forEach((p: any) => { projectMap[p.project_code?.toLowerCase() || ''] = p.id; });
 
+          // Build category_name → category_id map for both transaction_categories and project_categories
+          const categoryIdMap: Record<string, Record<string, string>> = {};
+          (formData.categories || []).forEach((c: any) => {
+            const key = `${c.type}_${c.name}`;
+            categoryIdMap[key] = categoryIdMap[key] || {};
+            categoryIdMap[key].id = c.id;
+          });
+          (formData.projectCategories || []).forEach((c: any) => {
+            const key = `project_${c.type}_${c.name}`;
+            categoryIdMap[key] = categoryIdMap[key] || {};
+            categoryIdMap[key].id = c.id;
+          });
+
           const insertData = rows.map(row => {
             // Detect if first column is a sequence number (integer, not an Excel date serial)
             // Excel dates are typically > 40000 (year ~2009+), sequence numbers are small integers
@@ -315,10 +331,22 @@ export default function Transactions() {
             const projectId = projectCode ? (projectMap[projectCode.toLowerCase()] || null) : null;
             const ledgerType = projectId ? 'project' : 'company_daily';
 
+            const categoryName = String(row[2 + offset] || t('transactions.other'));
+
+            // Match category_id: prefer project_categories when ledgerType is 'project'
+            let categoryId: string | null = null;
+            if (ledgerType === 'project') {
+              categoryId = categoryIdMap[`project_${typeValue}_${categoryName}`]?.id || null;
+            }
+            if (!categoryId) {
+              categoryId = categoryIdMap[`${typeValue}_${categoryName}`]?.id || null;
+            }
+
             return {
               transaction_date: parseExcelDate(row[0 + offset]),
               type: typeValue as 'income' | 'expense',
-              category_name: String(row[2 + offset] || t('transactions.other')),
+              category_id: categoryId,
+              category_name: categoryName,
               summary: String(row[3 + offset] || ''),
               amount,
               currency: validCurrency as 'MYR' | 'CNY' | 'USD',
@@ -525,7 +553,7 @@ export default function Transactions() {
               </Card>
 
               {loading ? (
-                <Card><CardContent className="py-16 text-center text-muted-foreground">{t('common.loading')}</CardContent></Card>
+                <Card><CardContent className="p-0"><AppSectionLoading label={t('common.loading')} compact className="py-16 min-h-[200px]" /></CardContent></Card>
               ) : transactions.length === 0 ? (
                 <Card><CardContent className="p-0">
                   <EmptyState

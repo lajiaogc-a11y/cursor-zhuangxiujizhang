@@ -3,6 +3,7 @@ import { MobilePageShell } from '@/components/layout/MobilePageShell';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { workforceService } from '@/services';
 import { useI18n } from '@/lib/i18n';
+import { AppSectionLoading, ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { useTenant } from '@/lib/tenant';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,7 +16,7 @@ import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
 import {
   MapPin, Camera, Clock, CheckCircle, XCircle, LogIn, LogOut,
-  AlertTriangle, Loader2, RefreshCw,
+  AlertTriangle, RefreshCw,
 } from 'lucide-react';
 
 interface GeoPosition { lat: number; lng: number; accuracy: number }
@@ -185,7 +186,7 @@ export default function AttendancePage() {
           <CardHeader><CardTitle>{t('attendance.records')}</CardTitle></CardHeader>
           <CardContent>
             {recordsLoading ? (
-              <div className="flex items-center justify-center py-8"><Loader2 className="w-6 h-6 animate-spin" /></div>
+              <AppSectionLoading label={t('common.loading')} compact />
             ) : records.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">{t('common.noData')}</p>
             ) : (
@@ -241,7 +242,7 @@ export default function AttendancePage() {
               <div className="p-3 border rounded-lg space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium flex items-center gap-1"><MapPin className="w-4 h-4" /> {t('attendance.gpsLocation')}</span>
-                  <Button variant="ghost" size="sm" onClick={fetchGps} disabled={gpsLoading}>{gpsLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}</Button>
+                  <Button variant="ghost" size="sm" onClick={fetchGps} disabled={gpsLoading}>{gpsLoading ? <ChromeLoadingSpinner variant="muted" className="h-4 w-4" /> : <RefreshCw className="w-4 h-4" />}</Button>
                 </div>
                 {gps && <p className="text-xs text-muted-foreground">{gps.lat.toFixed(6)}, {gps.lng.toFixed(6)} (±{Math.round(gps.accuracy)}m)</p>}
                 {gpsError && <p className="text-xs text-destructive">{gpsError}</p>}
@@ -253,7 +254,7 @@ export default function AttendancePage() {
             <DialogFooter>
               <Button variant="outline" onClick={resetDialog}>{t('common.cancel')}</Button>
               <Button onClick={() => checkinMutation.mutate()} disabled={!selectedSite || !selectedWorker || checkinMutation.isPending}>
-                {checkinMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
+                {checkinMutation.isPending && <ChromeLoadingSpinner variant="muted" className="mr-1 h-4 w-4" />}
                 {checkinType === 'in' ? t('attendance.checkIn') : t('attendance.checkOut')}
               </Button>
             </DialogFooter>

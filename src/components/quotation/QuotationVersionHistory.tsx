@@ -9,6 +9,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useI18n } from '@/lib/i18n';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 
 interface Props {
   versions: QuotationVersion[];
@@ -20,6 +22,7 @@ interface Props {
 }
 
 export function QuotationVersionHistory({ versions, currentItems, onRestoreVersion, loading, projectNo, quotationDate }: Props) {
+  const { t } = useI18n();
   const [compareOpen, setCompareOpen] = useState(false);
   const [selectedV1, setSelectedV1] = useState<string | null>(null);
   const [selectedV2, setSelectedV2] = useState<string | null>(null);
@@ -145,7 +148,7 @@ export function QuotationVersionHistory({ versions, currentItems, onRestoreVersi
           <ScrollArea className="h-[calc(100vh-200px)]">
             <div className="space-y-2">
               {loading ? (
-                <div className="text-center py-8 text-muted-foreground">加载中...</div>
+                <AppSectionLoading label={t('common.loading')} compact />
               ) : versions.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">暂无历史版本<p className="text-sm mt-1">保存报价单时会自动创建版本</p></div>
               ) : (

@@ -8,11 +8,12 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertTriangle, Search, Trash2, Eye, Clock, Globe, Monitor, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
 export function ErrorLogManager() {
-  const { language } = useI18n();
+  const { language, t } = useI18n();
   const zh = language === 'zh';
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
@@ -125,7 +126,7 @@ export function ErrorLogManager() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <p className="text-sm text-muted-foreground text-center py-8">{zh ? '加载中...' : 'Loading...'}</p>
+            <AppSectionLoading label={t('common.loading')} compact />
           ) : logs.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">{zh ? '暂无错误日志' : 'No error logs'}</p>
           ) : (

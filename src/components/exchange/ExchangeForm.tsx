@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { format } from 'date-fns';
 import { CalendarIcon, RefreshCw } from 'lucide-react';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { useAuth } from '@/lib/auth';
 import { useTenant } from '@/lib/tenant';
 import { exchangesService } from '@/services';
@@ -111,10 +112,15 @@ export function ExchangeForm({ exchange, onSuccess, onCancel }: ExchangeFormProp
   const inAmount = form.watch('in_amount');
   const exchangeRate = form.watch('exchange_rate');
 
-  // 获取所有汇率
+  // 获取当前租户最新汇率映射
   useEffect(() => {
-    exchangesService.fetchLatestRateMap().then(setExchangeRates);
-  }, []);
+    const tid = tenant?.id;
+    if (!tid) {
+      setExchangeRates({});
+      return;
+    }
+    exchangesService.fetchLatestRateMap(tid).then(setExchangeRates);
+  }, [tenant?.id]);
 
   // 自动获取汇率
   const fetchExchangeRate = async () => {
@@ -122,7 +128,7 @@ export function ExchangeForm({ exchange, onSuccess, onCancel }: ExchangeFormProp
     
     setFetchingRate(true);
     try {
-      const pairRate = await exchangesService.fetchLatestPairRate(outCurrency, inCurrency);
+      const pairRate = await exchangesService.fetchLatestPairRate(outCurrency, inCurrency, tenant?.id);
       
       if (pairRate) {
         form.setValue('exchange_rate', pairRate.toFixed(3));
@@ -507,7 +513,7 @@ export function ExchangeForm({ exchange, onSuccess, onCancel }: ExchangeFormProp
                       onClick={fetchExchangeRate}
                       disabled={fetchingRate || outCurrency === inCurrency}
                     >
-                      <RefreshCw className={cn("w-4 h-4", fetchingRate && "animate-spin")} />
+                      {fetchingRate ? <ChromeLoadingSpinner variant="muted" className="h-4 w-4" /> : <RefreshCw className="h-4 w-4" />}
                     </Button>
                   )}
                 </FormLabel>
@@ -601,7 +607,8 @@ export function ExchangeForm({ exchange, onSuccess, onCancel }: ExchangeFormProp
             {t('form.cancel')}
           </Button>
           <Button type="submit" disabled={loading}>
-            {loading ? t('form.saving') : exchange ? t('form.update') : t('exchange.create')}
+            {loading && <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />}
+            {exchange ? t('form.update') : t('exchange.create')}
           </Button>
         </div>
       </form>

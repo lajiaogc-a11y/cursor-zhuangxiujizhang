@@ -1,15 +1,17 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldAlert, LogOut, Mail, RefreshCw } from 'lucide-react';
+import { AppChromeLoading } from '@/components/layout/AppChromeLoading';
 import { useAuth } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
 export default function Unauthorized() {
-  const { user, userRole, loading, signOut } = useAuth();
+  const { user, userRole, loading, signOut, refreshUserAccess } = useAuth();
   const navigate = useNavigate();
   const { t } = useI18n();
+  const [refreshing, setRefreshing] = useState(false);
 
   // 如果没有用户登录，重定向到登录页
   useEffect(() => {
@@ -25,8 +27,14 @@ export default function Unauthorized() {
     }
   }, [user, userRole, loading, navigate]);
 
-  const handleRefresh = () => {
-    window.location.reload();
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refreshUserAccess();
+      navigate('/', { replace: true });
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const handleLogout = async () => {
@@ -34,20 +42,16 @@ export default function Unauthorized() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <RefreshCw className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
+    return <AppChromeLoading label={t('common.loading')} />;
   }
 
-  // 如果没有用户，不渲染内容（会被 useEffect 重定向）
+  // 重定向前避免空白闪烁（与首屏壳一致）
   if (!user) {
-    return null;
+    return <AppChromeLoading label={t('common.loading')} />;
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-dvh flex items-center justify-center bg-background p-4">
       <Card className="max-w-md w-full">
         <CardHeader className="text-center">
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-warning/10 flex items-center justify-center">
@@ -75,9 +79,10 @@ export default function Unauthorized() {
           <Button 
             variant="outline" 
             className="w-full"
-            onClick={handleRefresh}
+            disabled={refreshing}
+            onClick={() => void handleRefresh()}
           >
-            <RefreshCw className="w-4 h-4 mr-2" />
+            <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
             {t('unauthorized.refresh')}
           </Button>
           <Button 

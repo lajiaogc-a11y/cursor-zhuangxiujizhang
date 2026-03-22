@@ -26,6 +26,7 @@ import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import type { Database } from '@/integrations/supabase/types';
 import { useI18n } from '@/lib/i18n';
+import { AppSectionLoading, ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { useDataRefresh } from '@/hooks/useDataRefresh';
 import { useTenant } from '@/lib/tenant';
 
@@ -320,7 +321,7 @@ export function UserManagement() {
             {t('users.createUser')}
           </Button>
           <Button variant="outline" size="sm" onClick={handleSyncEmails} disabled={syncing}>
-            <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
+            {syncing ? <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" /> : <RefreshCw className="w-4 h-4 mr-2" />}
             {syncing ? t('users.syncing') : t('users.syncEmails')}
           </Button>
         </div>
@@ -340,7 +341,7 @@ export function UserManagement() {
 
         <div className="space-y-3">
           {loading ? (
-            <div className="text-center py-8 text-muted-foreground">{t('common.loading')}</div>
+            <AppSectionLoading label={t('common.loading')} compact />
           ) : filteredUsers.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
@@ -541,7 +542,8 @@ export function UserManagement() {
               <div className="flex justify-end gap-2 pt-4">
                 <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('common.cancel')}</Button>
                 <Button onClick={handleSave} disabled={savingPermissions}>
-                  {savingPermissions ? t('common.loading') : t('common.save')}
+                  {savingPermissions && <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />}
+                  {t('common.save')}
                 </Button>
               </div>
             </div>
@@ -575,7 +577,8 @@ export function UserManagement() {
               <div className="flex justify-end gap-2 pt-2">
                 <Button variant="outline" onClick={() => setSetPasswordDialog(false)}>{t('common.cancel')}</Button>
                 <Button onClick={handleSetPassword} disabled={settingPassword || !newPasswordValue}>
-                  {settingPassword ? t('common.loading') : t('common.confirm')}
+                  {settingPassword && <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />}
+                  {t('common.confirm')}
                 </Button>
               </div>
             </div>

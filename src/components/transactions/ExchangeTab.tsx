@@ -18,7 +18,7 @@ import { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { useTenant } from '@/lib/tenant';
 
 
@@ -49,12 +49,22 @@ export function ExchangeTab() {
         },
       });
     },
+    enabled: !!tenantId,
   });
 
   const handleEdit = (exchange: ExchangeTransaction) => { setEditingExchange(exchange); setDialogOpen(true); };
-  const handleSuccess = () => { setDialogOpen(false); setEditingExchange(null); queryClient.invalidateQueries({ queryKey: queryKeys.exchanges }); refreshExchanges(); refreshAccounts(); refreshDashboard(); };
+  const handleSuccess = () => {
+    setDialogOpen(false);
+    setEditingExchange(null);
+    if (tenantId) queryClient.invalidateQueries({ queryKey: [...queryKeys.exchanges, tenantId] });
+    refreshExchanges();
+    refreshAccounts();
+    refreshDashboard();
+  };
   const handleCancel = () => { setDialogOpen(false); setEditingExchange(null); };
-  const handleRefresh = () => { queryClient.invalidateQueries({ queryKey: queryKeys.exchanges }); };
+  const handleRefresh = () => {
+    if (tenantId) queryClient.invalidateQueries({ queryKey: [...queryKeys.exchanges, tenantId] });
+  };
 
   const totalProfit = exchanges.filter(e => e.profit_loss > 0).reduce((sum, e) => sum + e.profit_loss, 0);
   const totalLoss = exchanges.filter(e => e.profit_loss < 0).reduce((sum, e) => sum + Math.abs(e.profit_loss), 0);
@@ -134,7 +144,7 @@ export function ExchangeTab() {
       <Card>
         <CardContent className="pt-6">
           {isLoading ? (
-            <div className="space-y-3">{[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
+            <AppSectionLoading label={t('common.loading')} compact />
           ) : (
             <ExchangeList exchanges={filteredExchanges as any} onEdit={handleEdit} onRefresh={handleRefresh} canEdit={canEdit} />
           )}

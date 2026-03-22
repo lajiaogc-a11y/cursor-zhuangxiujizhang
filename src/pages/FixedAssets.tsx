@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { useI18n } from '@/lib/i18n';
 import { useAuth } from '@/lib/auth';
 import { useTenant } from '@/lib/tenant';
@@ -134,10 +135,10 @@ export default function FixedAssets() {
                 <TableHead>{t('common.actions')}</TableHead>
               </TableRow></TableHeader>
               <TableBody>
-                {filtered.length === 0 ? (
-                  <TableRow><TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
-                    {isLoading ? t('common.loading') : t('assets.noAssets')}
-                  </TableCell></TableRow>
+                {isLoading ? (
+                  <TableRow><TableCell colSpan={8} className="p-0"><AppSectionLoading label={t('common.loading')} compact /></TableCell></TableRow>
+                ) : filtered.length === 0 ? (
+                  <TableRow><TableCell colSpan={8} className="text-center py-12 text-muted-foreground">{t('assets.noAssets')}</TableCell></TableRow>
                 ) : filtered.map(a => {
                   const dep = calcDepreciation(a);
                   return (

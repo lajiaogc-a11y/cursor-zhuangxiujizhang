@@ -49,30 +49,23 @@ const DEFAULT_BALANCES: CalculatedBalances = {
 
 export async function fetchCalculatedBalances(tenantId: string): Promise<CalculatedBalances> {
   requireTenantId(tenantId);
-  const [txRes, accRes] = await Promise.all([
-    supabase.from('transactions').select('type, amount, currency, account_type').eq('tenant_id', tenantId),
-    supabase.from('company_accounts').select('currency, account_type, balance, include_in_stats').eq('tenant_id', tenantId),
-  ]);
+
+  // company_accounts.balance 已由 recalculateAccountBalances 回写为「流水 + 换汇」的累计值，
+  // 直接以它为准；不再叠加 transactions，避免双重计算。
+  const { data: accounts } = await supabase
+    .from('company_accounts')
+    .select('currency, account_type, balance, include_in_stats')
+    .eq('tenant_id', tenantId);
 
   const balances: CalculatedBalances = JSON.parse(JSON.stringify(DEFAULT_BALANCES));
 
-  (accRes.data || []).forEach(acc => {
+  (accounts || []).forEach(acc => {
     if (acc.include_in_stats === false) return;
     const cur = acc.currency as keyof CalculatedBalances;
     const at = acc.account_type as 'cash' | 'bank';
     if (balances[cur]) {
       balances[cur][at] += Number(acc.balance || 0);
       balances[cur].total += Number(acc.balance || 0);
-    }
-  });
-
-  (txRes.data || []).forEach(tx => {
-    const cur = tx.currency as keyof CalculatedBalances;
-    const at = tx.account_type as 'cash' | 'bank';
-    if (balances[cur]) {
-      const effect = tx.type === 'income' ? tx.amount : -tx.amount;
-      balances[cur][at] += effect;
-      balances[cur].total += effect;
     }
   });
 

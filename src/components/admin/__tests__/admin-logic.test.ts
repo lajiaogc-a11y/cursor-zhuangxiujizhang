@@ -184,9 +184,10 @@ describe('Admin Components - Unit Tests', () => {
         { created_at: '2026-03-12T23:00:00Z' },
       ];
 
+      // 事件为 ISO UTC（…Z），按 UTC 小时统计，避免与运行环境时区不一致导致失败
       const hours = new Array(24).fill(0);
       events.forEach(e => {
-        const h = new Date(e.created_at).getHours();
+        const h = new Date(e.created_at).getUTCHours();
         hours[h]++;
       });
 
@@ -217,7 +218,8 @@ describe('Admin Components - Unit Tests', () => {
       const errorRate = eventCount > 0 ? ((errorCount / eventCount) * 100).toFixed(2) : '0';
       expect(errorRate).toBe('0.50');
 
-      const zeroRate = 0 > 0 ? ((0 / 0) * 100).toFixed(2) : '0';
+      const zeroEvents = 0;
+      const zeroRate = zeroEvents > 0 ? ((0 / zeroEvents) * 100).toFixed(2) : '0';
       expect(zeroRate).toBe('0');
     });
 

@@ -9,7 +9,6 @@ import { Label } from '@/components/ui/label';
 import { 
   Upload, 
   Database, 
-  Loader2,
   FileJson,
   CheckCircle2,
   AlertTriangle,
@@ -20,12 +19,12 @@ import {
   AlertCircle,
   Eye,
   EyeOff,
-  Undo2,
   ChevronDown,
   ChevronUp,
   History,
   Clock
 } from 'lucide-react';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { settingsService } from '@/services';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
@@ -761,7 +760,7 @@ export function DataImport() {
                 <div className="flex flex-col items-center gap-2">
                   {validating ? (
                     <>
-                      <Loader2 className="w-6 h-6 animate-spin" />
+                      <ChromeLoadingSpinner variant="muted" className="h-6 w-6" />
                       <span>{t('dataImport.validating')}</span>
                     </>
                   ) : (
@@ -878,7 +877,7 @@ export function DataImport() {
             {/* Conflict Detection */}
             {checkingConflicts && (
               <div className="flex items-center gap-2 p-4 bg-muted rounded-lg">
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <ChromeLoadingSpinner variant="muted" className="h-4 w-4" />
                 <span>{t('dataImport.checkingConflicts')}</span>
               </div>
             )}
@@ -937,7 +936,7 @@ export function DataImport() {
                 <Button onClick={handleImport} disabled={importing || checkingConflicts}>
                   {importing ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />
                       {t('dataImport.importingProgress')}
                     </>
                   ) : (
@@ -1037,7 +1036,7 @@ export function DataImport() {
             {rollingBack && (
               <div className="space-y-2 p-4 bg-destructive/10 rounded-lg border border-destructive/20">
                 <div className="flex items-center gap-2 text-destructive">
-                  <Undo2 className="w-4 h-4 animate-spin" />
+                  <ChromeLoadingSpinner variant="muted" className="h-4 w-4" />
                   <span className="font-medium">{t('dataImport.rollbackInProgress')}</span>
                 </div>
                 {rollbackStatus && (
@@ -1051,7 +1050,7 @@ export function DataImport() {
               <div className="space-y-2 p-4 bg-muted rounded-lg">
                 <div className="flex items-center justify-between text-sm">
                   <span className="flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <ChromeLoadingSpinner variant="muted" className="h-4 w-4" />
                     {t('dataImport.importing')}: {getTableDisplayName(currentTable)}
                   </span>
                   <span>{progress}%</span>
@@ -1135,7 +1134,7 @@ export function DataImport() {
               <CollapsibleContent className="pt-4">
                 {loadingHistory ? (
                   <div className="flex items-center justify-center py-4">
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <ChromeLoadingSpinner variant="muted" className="h-5 w-5" />
                   </div>
                 ) : importHistory.length === 0 ? (
                   <div className="text-center py-4 text-muted-foreground">

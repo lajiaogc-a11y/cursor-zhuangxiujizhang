@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchGlobalExchangeRates } from '@/services/admin.service';
 import { queryKeys } from '@/lib/queryKeys';
+import { useTenant } from '@/lib/tenant';
 
 export interface GlobalExchangeRates {
   usd: number;
@@ -21,10 +22,14 @@ const DEFAULT_RATES: GlobalExchangeRates = {
 };
 
 export function useGlobalExchangeRates(): { rates: GlobalExchangeRates; isLoading: boolean } {
-  const { data: rates = DEFAULT_RATES, isLoading } = useQuery({
-    queryKey: [...queryKeys.exchangeRates, 'global'],
+  const { tenant } = useTenant();
+  const tenantId = tenant?.id;
+
+  const { data: rates = DEFAULT_RATES, isPending } = useQuery({
+    queryKey: [...queryKeys.exchangeRates, 'global', tenantId],
     queryFn: async () => {
-      const data = await fetchGlobalExchangeRates();
+      if (!tenantId) return DEFAULT_RATES;
+      const data = await fetchGlobalExchangeRates(tenantId);
       if (!data?.length) return DEFAULT_RATES;
 
       const getRate = (from: string, to: string): number | null => {
@@ -42,8 +47,9 @@ export function useGlobalExchangeRates(): { rates: GlobalExchangeRates; isLoadin
 
       return { usd: myrToUsd, cny: myrToCny, cnyToMyr, myrToCny, usdToMyr, myrToUsd, usdToCny, cnyToUsd };
     },
+    enabled: !!tenantId,
     staleTime: 5 * 60 * 1000,
   });
 
-  return { rates, isLoading };
+  return { rates, isLoading: !!tenantId && isPending };
 }

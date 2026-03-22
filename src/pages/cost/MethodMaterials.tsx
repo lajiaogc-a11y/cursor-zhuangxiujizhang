@@ -4,23 +4,26 @@ import { Link2, Search, ChevronRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { useQuery } from '@tanstack/react-query';
 import { costService } from '@/services';
 import { useAuth } from '@/lib/auth';
+import { useTenant } from '@/lib/tenant';
 import { MethodMaterialsDialog } from '@/components/cost/MethodMaterialsDialog';
 import { useI18n } from '@/lib/i18n';
 
 export default function MethodMaterialsPage() {
   const { user } = useAuth();
+  const { tenant } = useTenant();
+  const tenantId = tenant?.id;
   const { t } = useI18n();
   const [search, setSearch] = useState('');
   const [selectedMethodId, setSelectedMethodId] = useState<string | null>(null);
 
   const { data: methods = [], isLoading } = useQuery({
-    queryKey: ['q_methods_with_materials_count'],
+    queryKey: ['q_methods_with_materials_count', tenantId],
     queryFn: () => costService.fetchMethodsWithMaterialCounts(),
-    enabled: !!user,
+    enabled: !!user && !!tenantId,
   });
 
   const filtered = methods.filter((m: any) => m.name.toLowerCase().includes(search.toLowerCase()));
@@ -36,7 +39,7 @@ export default function MethodMaterialsPage() {
         <p className="text-xs text-muted-foreground mb-3">为每种工法配置所需的材料清单和用量系数，点击工法查看详情。</p>
 
         {isLoading ? (
-          <div className="space-y-2">{[1, 2, 3].map(i => <Skeleton key={i} className="h-16" />)}</div>
+          <AppSectionLoading label={t('common.loading')} compact />
         ) : filtered.length === 0 ? (
           <p className="text-center py-12 text-sm text-muted-foreground">暂无工法数据</p>
         ) : (

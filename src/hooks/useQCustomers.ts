@@ -9,29 +9,30 @@ export function useQCustomers() {
   const { toast } = useToast();
   const { user } = useAuth();
   const { tenant } = useTenant();
+  const tenantId = tenant?.id;
   const queryClient = useQueryClient();
 
   const { data: customers = [], isLoading } = useQuery({
-    queryKey: ['q_customers'],
+    queryKey: ['q_customers', tenantId],
     queryFn: () => qs.fetchCustomers(),
-    enabled: !!user,
+    enabled: !!user && !!tenantId,
   });
 
   const addCustomer = useMutation({
     mutationFn: (customer: Omit<Customer, 'id'>) => qs.addCustomer(customer, user?.id, tenant?.id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['q_customers'] }); toast({ title: '客户已添加' }); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['q_customers', tenantId] }); toast({ title: '客户已添加' }); },
     onError: (e: any) => toast({ title: '添加失败', description: e.message, variant: 'destructive' }),
   });
 
   const updateCustomer = useMutation({
     mutationFn: ({ id, ...customer }: Partial<Customer> & { id: string }) => qs.updateCustomer(id, customer),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['q_customers'] }); toast({ title: '客户已更新' }); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['q_customers', tenantId] }); toast({ title: '客户已更新' }); },
     onError: (e: any) => toast({ title: '更新失败', description: e.message, variant: 'destructive' }),
   });
 
   const deleteCustomer = useMutation({
     mutationFn: (id: string) => qs.deleteCustomer(id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['q_customers'] }); toast({ title: '客户已删除' }); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['q_customers', tenantId] }); toast({ title: '客户已删除' }); },
     onError: (e: any) => toast({ title: '删除失败', description: e.message, variant: 'destructive' }),
   });
 

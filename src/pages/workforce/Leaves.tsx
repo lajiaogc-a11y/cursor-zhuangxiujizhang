@@ -14,7 +14,9 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
 import { format, differenceInDays, parseISO } from 'date-fns';
-import { Plus, Clock, CheckCircle, XCircle, Loader2, CalendarDays } from 'lucide-react';
+import { Plus, Clock, CheckCircle, XCircle, CalendarDays } from 'lucide-react';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 
 const LEAVE_TYPES = ['annual', 'sick', 'personal', 'unpaid', 'other'] as const;
 
@@ -119,7 +121,7 @@ export default function LeavesPage() {
           <CardHeader><CardTitle>{t('workforce.leaves')}</CardTitle></CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="flex items-center justify-center py-8"><Loader2 className="w-6 h-6 animate-spin" /></div>
+              <AppSectionLoading label={t('common.loading')} compact />
             ) : leaves.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">{t('common.noData')}</p>
             ) : (
@@ -189,7 +191,7 @@ export default function LeavesPage() {
             <DialogFooter>
               <Button variant="outline" onClick={resetForm}>{t('common.cancel')}</Button>
               <Button onClick={() => createMutation.mutate()} disabled={!workerId || !startDate || !endDate || createMutation.isPending}>
-                {createMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-1" />}{t('common.save')}
+                {createMutation.isPending && <ChromeLoadingSpinner variant="muted" className="mr-1 h-4 w-4" />}{t('common.save')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -215,7 +217,7 @@ export default function LeavesPage() {
                 <XCircle className="w-4 h-4 mr-1" /> {t('leave.reject')}
               </Button>
               <Button onClick={() => selectedLeave && reviewMutation.mutate({ id: selectedLeave.id, status: 'approved' })} disabled={reviewMutation.isPending}>
-                {reviewMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
+                {reviewMutation.isPending && <ChromeLoadingSpinner variant="muted" className="mr-1 h-4 w-4" />}
                 <CheckCircle className="w-4 h-4 mr-1" /> {t('leave.approve')}
               </Button>
             </DialogFooter>

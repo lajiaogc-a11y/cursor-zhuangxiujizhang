@@ -13,7 +13,7 @@ import { useAuth } from '@/lib/auth';
 import { useTenant } from '@/lib/tenant';
 import { toast } from 'sonner';
 import { RefreshCw } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { checkApprovalThreshold } from '@/lib/approvalCheck';
 
 interface PayableFormProps {
@@ -89,7 +89,7 @@ export function PayableForm({ open, onOpenChange, onSuccess, editData, defaultRe
     }
     setFetchingRate(true);
     try {
-      const rate = await fetchLatestExchangeRate(form.currency);
+      const rate = await fetchLatestExchangeRate(form.currency, 'MYR', tenant?.id);
       if (rate) {
         setForm(f => ({ ...f, exchange_rate: rate.toString() }));
         setRateInput(rate.toString());
@@ -271,7 +271,7 @@ export function PayableForm({ open, onOpenChange, onSuccess, editData, defaultRe
                     {t('transactions.exchangeRate')} ({form.currency} → MYR)
                     {useAutoRate && (
                       <Button type="button" variant="ghost" size="sm" onClick={fetchExchangeRate} disabled={fetchingRate} className="h-6 w-6 p-0">
-                        <RefreshCw className={cn("w-4 h-4", fetchingRate && "animate-spin")} />
+                        {fetchingRate ? <ChromeLoadingSpinner variant="muted" className="h-4 w-4" /> : <RefreshCw className="h-4 w-4" />}
                       </Button>
                     )}
                   </Label>
@@ -316,7 +316,10 @@ export function PayableForm({ open, onOpenChange, onSuccess, editData, defaultRe
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
-            <Button onClick={handleSubmit} disabled={loading}>{loading ? t('common.loading') : t('common.save')}</Button>
+            <Button onClick={handleSubmit} disabled={loading}>
+              {loading && <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />}
+              {t('common.save')}
+            </Button>
           </div>
         </div>
       </DialogContent>

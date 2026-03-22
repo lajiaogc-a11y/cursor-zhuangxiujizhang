@@ -5,7 +5,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { queryKeys, invalidationMap } from '@/lib/queryKeys';
+import { queryKeys, invalidateAlertQueries } from '@/lib/queryKeys';
 import * as alertsService from '@/services/alerts.service';
 
 export function useAlertsData(tenantId: string | undefined) {
@@ -20,7 +20,7 @@ export function useResolveAlert(tenantId: string | undefined) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (alertId: string) => alertsService.resolveAlert(alertId),
-    onSuccess: () => invalidationMap.alertMutation.forEach(k => qc.invalidateQueries({ queryKey: k })),
+    onSuccess: () => invalidateAlertQueries(qc, tenantId),
   });
 }
 
@@ -29,24 +29,24 @@ export function useSaveRule(tenantId: string | undefined) {
   return useMutation({
     mutationFn: ({ payload, editingRuleId }: { payload: any; editingRuleId?: string }) =>
       alertsService.saveRule(payload, editingRuleId),
-    onSuccess: () => invalidationMap.alertMutation.forEach(k => qc.invalidateQueries({ queryKey: k })),
+    onSuccess: () => invalidateAlertQueries(qc, tenantId),
   });
 }
 
-export function useToggleRule() {
+export function useToggleRule(tenantId: string | undefined) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ ruleId, currentActive }: { ruleId: string; currentActive: boolean }) =>
       alertsService.toggleRule(ruleId, currentActive),
-    onSuccess: () => invalidationMap.alertMutation.forEach(k => qc.invalidateQueries({ queryKey: k })),
+    onSuccess: () => invalidateAlertQueries(qc, tenantId),
   });
 }
 
-export function useDeleteRule() {
+export function useDeleteRule(tenantId: string | undefined) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (ruleId: string) => alertsService.deleteRule(ruleId),
-    onSuccess: () => invalidationMap.alertMutation.forEach(k => qc.invalidateQueries({ queryKey: k })),
+    onSuccess: () => invalidateAlertQueries(qc, tenantId),
   });
 }
 
@@ -55,6 +55,6 @@ export function useGenerateAlerts() {
   return useMutation({
     mutationFn: ({ tenantId, messages }: { tenantId: string; messages: any }) =>
       alertsService.generateAlerts(tenantId, messages),
-    onSuccess: () => invalidationMap.alertMutation.forEach(k => qc.invalidateQueries({ queryKey: k })),
+    onSuccess: (_data, variables) => invalidateAlertQueries(qc, variables.tenantId),
   });
 }

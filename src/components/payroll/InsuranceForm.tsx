@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/auth';
 import { useTenant } from '@/lib/tenant';
 import { saveInsurancePayment } from '@/services/payroll.service';
-import { Loader2 } from 'lucide-react';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { format } from 'date-fns';
 
 interface Employee {
@@ -276,7 +276,7 @@ export function InsuranceForm({ open, onOpenChange, insurance, employees, onSucc
               {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {loading && <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />}
               {t('common.save')}
             </Button>
           </div>

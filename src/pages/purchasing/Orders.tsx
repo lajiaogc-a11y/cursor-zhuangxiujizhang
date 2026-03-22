@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -29,6 +29,7 @@ import { useQSuppliers } from '@/hooks/useQSuppliers';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { purchasingService } from '@/services';
 import { useAuth } from '@/lib/auth';
+import { useTenant } from '@/lib/tenant';
 import { useToast } from '@/hooks/use-toast';
 import { useI18n } from '@/lib/i18n';
 import { format } from 'date-fns';
@@ -37,6 +38,8 @@ export default function OrdersPage() {
   const { orders, loading } = useQPurchaseOrders();
   const { suppliers } = useQSuppliers();
   const { user } = useAuth();
+  const { tenant } = useTenant();
+  const tenantId = tenant?.id;
   const { toast } = useToast();
   const { t } = useI18n();
   const queryClient = useQueryClient();
@@ -96,21 +99,21 @@ export default function OrdersPage() {
   const detailOrder = orders.find(o => o.id === detailId);
 
   const { data: orderItems = [] } = useQuery({
-    queryKey: ['q_purchase_order_items', detailId],
+    queryKey: ['q_purchase_order_items', tenantId, detailId],
     queryFn: () => purchasingService.fetchOrderItems(detailId!),
     enabled: !!detailId,
   });
 
   const { data: payments = [] } = useQuery({
-    queryKey: ['q_purchase_payments', detailId],
+    queryKey: ['q_purchase_payments', tenantId, detailId],
     queryFn: () => purchasingService.fetchOrderPayments(detailId!),
     enabled: !!detailId,
   });
 
   const { data: materials = [] } = useQuery({
-    queryKey: ['q_materials_po_select'],
+    queryKey: ['q_materials_po_select', tenantId],
     queryFn: () => purchasingService.fetchActiveMaterials(),
-    enabled: !!user,
+    enabled: !!user && !!tenantId,
   });
 
   const createOrderMut = useMutation({
@@ -119,7 +122,7 @@ export default function OrdersPage() {
       await purchasingService.createOrder(newOrder, no, user?.id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['q_purchase_orders'] });
+      queryClient.invalidateQueries({ queryKey: ['q_purchase_orders', tenantId] });
       toast({ title: t('po.orderCreated') });
       setCreateOpen(false);
       setNewOrder({ supplierId: '', notes: '', deliveryDate: '' });
@@ -135,8 +138,8 @@ export default function OrdersPage() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['q_purchase_order_items', detailId] });
-      queryClient.invalidateQueries({ queryKey: ['q_purchase_orders'] });
+      queryClient.invalidateQueries({ queryKey: ['q_purchase_order_items', tenantId, detailId] });
+      queryClient.invalidateQueries({ queryKey: ['q_purchase_orders', tenantId] });
       toast({ title: t('po.materialAdded') });
       setAddItemOpen(false);
       setNewItem({ materialId: '', quantity: 1, unitPrice: 0, notes: '' });
@@ -149,8 +152,8 @@ export default function OrdersPage() {
       await purchasingService.deleteOrderItem(itemId, detailId!);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['q_purchase_order_items', detailId] });
-      queryClient.invalidateQueries({ queryKey: ['q_purchase_orders'] });
+      queryClient.invalidateQueries({ queryKey: ['q_purchase_order_items', tenantId, detailId] });
+      queryClient.invalidateQueries({ queryKey: ['q_purchase_orders', tenantId] });
       toast({ title: t('po.deleted') });
     },
   });
@@ -166,8 +169,8 @@ export default function OrdersPage() {
       await purchasingService.updateOrderPaymentStatus(detailId!, totalPaid, order?.totalAmount || 0);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['q_purchase_payments', detailId] });
-      queryClient.invalidateQueries({ queryKey: ['q_purchase_orders'] });
+      queryClient.invalidateQueries({ queryKey: ['q_purchase_payments', tenantId, detailId] });
+      queryClient.invalidateQueries({ queryKey: ['q_purchase_orders', tenantId] });
       toast({ title: t('po.paymentRecorded') });
       setPaymentOpen(false);
       setNewPayment({ amount: 0, paymentMethod: 'bank_transfer', referenceNo: '', notes: '' });
@@ -183,7 +186,7 @@ export default function OrdersPage() {
       await purchasingService.updateOrderStatus(orderId, status);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['q_purchase_orders'] });
+      queryClient.invalidateQueries({ queryKey: ['q_purchase_orders', tenantId] });
       toast({ title: t('po.statusUpdated') });
     },
   });
@@ -193,7 +196,7 @@ export default function OrdersPage() {
       await purchasingService.deleteOrder(id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['q_purchase_orders'] });
+      queryClient.invalidateQueries({ queryKey: ['q_purchase_orders', tenantId] });
       toast({ title: t('po.orderDeleted') }); setDeleteId(null); setDetailId(null);
     },
   });
@@ -206,7 +209,7 @@ export default function OrdersPage() {
     const st = statusMap[detailOrder.status] || statusMap.draft;
     const nextStatuses = statusFlow[detailOrder.status] || [];
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-dvh bg-background">
         <header className="bg-card border-b border-border sticky top-0 z-40">
           <div className="flex items-center justify-between px-4 h-12">
             <div className="flex items-center gap-2">
@@ -444,7 +447,7 @@ export default function OrdersPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input placeholder={t('po.searchOrders')} value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
         </div>
-        {loading ? <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-24" />)}</div>
+        {loading ? <AppSectionLoading label={t('common.loading')} compact />
         : sorted.length === 0 ? <div className="text-center py-12 text-muted-foreground"><FileText className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>{t('po.noOrders')}</p><p className="text-xs mt-1">{t('po.noOrdersHint')}</p></div>
         : isMobile ? renderListCards() : renderListTable()}
       </div>

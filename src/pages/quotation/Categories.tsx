@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
@@ -40,21 +40,22 @@ export default function CategoriesPage() {
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   const { tenant } = useTenant();
+  const tenantId = tenant?.id;
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editing, setEditing] = useState<Partial<Category>>({});
   const [search, setSearch] = useState('');
 
   const { data: categories = [], isLoading } = useQuery({
-    queryKey: ['q_product_categories'],
+    queryKey: ['q_product_categories', tenantId],
     queryFn: () => qService.fetchProductCategories() as Promise<Category[]>,
-    enabled: !!user,
+    enabled: !!user && !!tenantId,
   });
 
   const save = useMutation({
     mutationFn: (cat: Partial<Category>) => qService.saveProductCategory(cat, tenant?.id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['q_product_categories'] });
+      queryClient.invalidateQueries({ queryKey: ['q_product_categories', tenantId] });
       toast({ title: t('cat.saved') });
       setDialogOpen(false);
     },
@@ -64,7 +65,7 @@ export default function CategoriesPage() {
   const del = useMutation({
     mutationFn: (id: string) => qService.deleteProductCategory(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['q_product_categories'] });
+      queryClient.invalidateQueries({ queryKey: ['q_product_categories', tenantId] });
       toast({ title: t('cat.deleted') });
       setDeleteId(null);
     },
@@ -163,7 +164,7 @@ export default function CategoriesPage() {
         </div>
 
         {isLoading ? (
-          <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-12" />)}</div>
+          <AppSectionLoading label={t('common.loading')} compact />
         ) : filtered.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <FolderTree className="w-12 h-12 mx-auto mb-3 opacity-30" />

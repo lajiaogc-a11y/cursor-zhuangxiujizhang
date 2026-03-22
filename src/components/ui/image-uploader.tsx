@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useId } from 'react';
-import { Upload, X, Loader2, ImageIcon, FileText, CheckCircle } from 'lucide-react';
+import { Upload, X, ImageIcon, FileText, CheckCircle } from 'lucide-react';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useI18n } from '@/lib/i18n';
@@ -224,7 +225,7 @@ export function ImageUploader({
     >
       {compressing ? (
         <div className={cn('flex items-center', compact ? 'gap-2' : 'flex-col gap-1 py-2')}>
-          <Loader2 className={cn('animate-spin text-primary', compact ? 'w-5 h-5' : 'w-8 h-8')} />
+          <ChromeLoadingSpinner variant="primary" className={compact ? 'h-5 w-5' : 'h-8 w-8'} />
           <p className="text-sm text-muted-foreground">{t('upload.compressing')}</p>
         </div>
       ) : (
@@ -263,7 +264,7 @@ export function ImageUploader({
               {uploading ? (
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 text-sm">
-                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <ChromeLoadingSpinner variant="muted" className="h-3 w-3" />
                     <span>{t('upload.uploading')}</span>
                   </div>
                   <Progress value={uploadProgress} className="h-1" />
@@ -304,7 +305,7 @@ export function ImageUploader({
             )}
             {uploading && (
               <div className="absolute inset-0 bg-background/80 flex flex-col items-center justify-center gap-2">
-                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                <ChromeLoadingSpinner variant="primary" className="h-6 w-6" />
                 <div className="w-3/4">
                   <Progress value={uploadProgress} className="h-2" />
                 </div>

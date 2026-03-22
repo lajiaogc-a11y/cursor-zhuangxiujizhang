@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { MobilePageShell } from '@/components/layout/MobilePageShell';
+import { AppSectionLoading, ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { useI18n } from '@/lib/i18n';
 import { useTenant } from '@/lib/tenant';
 import { useAuth } from '@/lib/auth';
@@ -154,7 +155,7 @@ export default function CRMContracts() {
       }, editing?.id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contracts'] });
+      queryClient.invalidateQueries({ queryKey: ['contracts', tenantId] });
       setShowDialog(false);
       setEditing(null);
       toast.success(editing ? t('common.updateSuccess') : t('common.createSuccess'));
@@ -167,7 +168,7 @@ export default function CRMContracts() {
       await crmService.updateContractStatus(id, status);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contracts'] });
+      queryClient.invalidateQueries({ queryKey: ['contracts', tenantId] });
       toast.success(t('common.updateSuccess'));
     },
   });
@@ -177,7 +178,7 @@ export default function CRMContracts() {
       await crmService.signContract(tenantId!, contractId, name, signatureData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contracts'] });
+      queryClient.invalidateQueries({ queryKey: ['contracts', tenantId] });
       setShowSignDialog(false);
       setSigningContract(null);
       setSignerName('');
@@ -288,7 +289,7 @@ export default function CRMContracts() {
 
         {/* Table */}
         {isLoading ? (
-          <div className="text-center py-12 text-muted-foreground">{t('common.loading')}</div>
+          <AppSectionLoading label={t('common.loading')} compact />
         ) : filtered.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16 text-muted-foreground">
@@ -491,7 +492,8 @@ export default function CRMContracts() {
                   onClick={() => saveMutation.mutate()}
                   disabled={!form.title || saveMutation.isPending}
                 >
-                  {saveMutation.isPending ? t('common.saving') : t('common.save')}
+                  {saveMutation.isPending && <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />}
+                  {t('common.save')}
                 </Button>
               </div>
             </div>

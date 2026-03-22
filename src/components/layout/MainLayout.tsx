@@ -2,12 +2,15 @@ import { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { useAuth } from '@/lib/auth';
-import { Loader2, ChevronRight, Home } from 'lucide-react';
+import { useTenant } from '@/lib/tenant';
+import { ChevronRight, Home, AlertTriangle } from 'lucide-react';
 import { useIsFetching } from '@tanstack/react-query';
 import { useI18n } from '@/lib/i18n';
 import { Link } from 'react-router-dom';
 import { AnnouncementBanner } from '@/components/admin/AnnouncementBanner';
 import { KeyboardShortcuts } from './KeyboardShortcuts';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AppChromeLoading } from '@/components/layout/AppChromeLoading';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -37,16 +40,13 @@ const breadcrumbMap: Record<string, string> = {
 
 export function MainLayout({ children }: MainLayoutProps) {
   const { user, loading } = useAuth();
+  const { tenant, tenants, loading: tenantLoading } = useTenant();
   const isFetching = useIsFetching();
   const location = useLocation();
-  const { t } = useI18n();
+  const { t, language } = useI18n();
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
+    return <AppChromeLoading label={t('common.loading')} />;
   }
 
   if (!user) {
@@ -65,14 +65,18 @@ export function MainLayout({ children }: MainLayoutProps) {
     });
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       {isFetching > 0 && (
         <div className="fixed top-0 left-0 right-0 z-[9999] h-0.5">
           <div className="h-full progress-gradient rounded-r" style={{ width: '100%' }} />
         </div>
       )}
       <Sidebar />
-      <main id="main-content" className="min-h-screen pt-14 lg:pt-0 lg:ml-[260px]" role="main">
+      <main
+        id="main-content"
+        className="min-h-dvh max-h-dvh app-main-scroll pt-14 lg:pt-0 lg:ml-[260px] lg:max-h-none lg:min-h-dvh"
+        role="main"
+      >
         {/* Breadcrumb bar */}
         {breadcrumbs.length > 0 && (
           <div className="hidden lg:flex items-center gap-1.5 px-6 py-2 border-b border-border bg-background text-xs text-muted-foreground">
@@ -91,8 +95,21 @@ export function MainLayout({ children }: MainLayoutProps) {
             ))}
           </div>
         )}
-        <div className="p-4 sm:p-5 lg:p-6 pb-20 lg:pb-6 animate-page-enter space-y-3">
+        <div className="p-4 sm:p-5 lg:p-6 pb-20 lg:pb-6 space-y-3">
           <AnnouncementBanner />
+          {!tenantLoading && user && !tenant && tenants.length === 0 && (
+            <Alert className="border-amber-500/40 bg-amber-500/5">
+              <AlertTriangle className="h-4 w-4 text-amber-600" />
+              <AlertTitle className="text-amber-800 dark:text-amber-200">
+                {language === 'zh' ? '未加入任何组织（租户）' : 'No organization (tenant)'}
+              </AlertTitle>
+              <AlertDescription className="text-amber-900/90 dark:text-amber-100/90">
+                {language === 'zh'
+                  ? '当前账号没有可用的租户成员身份。请联系管理员分配邀请码或成员资格；若刚完成注册，请确认注册时已使用有效邀请码。'
+                  : 'Your account has no active tenant membership. Ask an administrator for an invitation, or register with a valid invite code.'}
+              </AlertDescription>
+            </Alert>
+          )}
           {children}
         </div>
         <KeyboardShortcuts />

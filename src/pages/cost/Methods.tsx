@@ -4,7 +4,7 @@ import { Wrench, Plus, Pencil, Trash2, Search, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -49,13 +49,25 @@ export default function MethodsPage() {
 
   const save = useMutation({
     mutationFn: async (m: any) => costService.saveMethod(m, user?.id, tenantId),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['q_methods'] }); toast({ title: t('cost.methodSaved') }); setDialogOpen(false); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['q_methods', tenantId] });
+      queryClient.invalidateQueries({ queryKey: ['q_methods_select', tenantId] });
+      queryClient.invalidateQueries({ queryKey: ['q_methods_bd_select', tenantId] });
+      queryClient.invalidateQueries({ queryKey: ['q_methods_with_materials_count', tenantId] });
+      toast({ title: t('cost.methodSaved') }); setDialogOpen(false);
+    },
     onError: (e: any) => toast({ title: t('cost.saveFailed'), description: e.message, variant: 'destructive' }),
   });
 
   const del = useMutation({
     mutationFn: (id: string) => costService.deactivateMethod(id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['q_methods'] }); toast({ title: t('cost.methodDeleted') }); setDeleteId(null); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['q_methods', tenantId] });
+      queryClient.invalidateQueries({ queryKey: ['q_methods_select', tenantId] });
+      queryClient.invalidateQueries({ queryKey: ['q_methods_bd_select', tenantId] });
+      queryClient.invalidateQueries({ queryKey: ['q_methods_with_materials_count', tenantId] });
+      toast({ title: t('cost.methodDeleted') }); setDeleteId(null);
+    },
   });
 
   const openAdd = () => { setEditing({ methodCode: '', nameZh: '', nameEn: '', categoryId: '', defaultWastePct: 5, description: '' }); setDialogOpen(true); };
@@ -136,7 +148,7 @@ export default function MethodsPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input placeholder={t('cost.searchMethod')} value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
         </div>
-        {isLoading ? <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-20" />)}</div>
+        {isLoading ? <AppSectionLoading label={t('common.loading')} compact />
         : filtered.length === 0 ? <div className="text-center py-12 text-muted-foreground"><Wrench className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>{t('cost.noMethods')}</p></div>
         : <ResponsiveTable mobileView={mobileCards} desktopView={desktopTable} />}
       </div>

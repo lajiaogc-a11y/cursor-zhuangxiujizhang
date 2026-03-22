@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Settings, Building, Save, Loader2, CreditCard } from 'lucide-react';
+import { Settings, Building, Save, CreditCard } from 'lucide-react';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { CompanySettings, CostAnalysis } from '@/types/quotation';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -8,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCompanySettings } from '@/hooks/useCompanySettings';
+import { useI18n } from '@/lib/i18n';
 
 interface Props {
   open: boolean;
@@ -19,6 +21,7 @@ interface Props {
 }
 
 export function QuotationSettingsDialog({ open, onOpenChange, settings, costAnalysis, onSettingsChange, onCostAnalysisChange }: Props) {
+  const { t } = useI18n();
   const { updateSettings } = useCompanySettings();
   const [isSaving, setIsSaving] = useState(false);
 
@@ -95,7 +98,12 @@ export function QuotationSettingsDialog({ open, onOpenChange, settings, costAnal
 
         <DialogFooter className="mt-6 pt-4 border-t">
           <Button onClick={handleSaveToDatabase} disabled={isSaving} className="w-full sm:w-auto">
-            {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />保存中...</> : <><Save className="w-4 h-4 mr-2" />保存设置到数据库</>}
+            {isSaving ? (
+              <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />
+            ) : (
+              <Save className="w-4 h-4 mr-2" />
+            )}
+            {t('qs.saveToDatabase')}
           </Button>
         </DialogFooter>
       </DialogContent>

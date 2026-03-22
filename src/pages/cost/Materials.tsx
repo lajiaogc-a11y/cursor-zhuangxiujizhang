@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -15,6 +15,7 @@ import { useQMaterials, type QMaterial } from '@/hooks/useQMaterials';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { costService } from '@/services';
 import { useAuth } from '@/lib/auth';
+import { useTenant } from '@/lib/tenant';
 import { useToast } from '@/hooks/use-toast';
 import { useI18n } from '@/lib/i18n';
 import { useResponsive } from '@/hooks/useResponsive';
@@ -24,6 +25,8 @@ import { useGlobalExchangeRates } from '@/hooks/useGlobalExchangeRates';
 export default function CostMaterialsPage() {
   const { materials, loading } = useQMaterials('cost');
   const { user } = useAuth();
+  const { tenant } = useTenant();
+  const tenantId = tenant?.id;
   const { toast } = useToast();
   const { t } = useI18n();
   const queryClient = useQueryClient();
@@ -40,9 +43,9 @@ export default function CostMaterialsPage() {
 
   // Load suppliers for dropdown
   const { data: suppliers = [] } = useQuery({
-    queryKey: ['q_suppliers_list'],
+    queryKey: ['q_active_suppliers_cost', tenantId],
     queryFn: () => costService.fetchActiveSuppliers(),
-    enabled: !!user,
+    enabled: !!user && !!tenantId,
   });
 
   const filtered = materials.filter(m =>
@@ -52,8 +55,8 @@ export default function CostMaterialsPage() {
   const save = useMutation({
     mutationFn: async (m: any) => costService.saveMaterial(m, user?.id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['q_materials_cost'] });
-      queryClient.invalidateQueries({ queryKey: ['q_materials_purchasing'] });
+      queryClient.invalidateQueries({ queryKey: ['q_materials_cost', tenantId] });
+      queryClient.invalidateQueries({ queryKey: ['q_materials_purchasing', tenantId] });
       toast({ title: t('cost.materialSaved') });
       setDialogOpen(false);
     },
@@ -63,7 +66,7 @@ export default function CostMaterialsPage() {
   const del = useMutation({
     mutationFn: (id: string) => costService.deactivateMaterial(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['q_materials_cost'] });
+      queryClient.invalidateQueries({ queryKey: ['q_materials_cost', tenantId] });
       toast({ title: t('cost.materialDeleted') });
       setDeleteId(null);
     },
@@ -175,7 +178,7 @@ export default function CostMaterialsPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input placeholder={t('cost.searchMaterial')} value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
         </div>
-        {loading ? <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-20" />)}</div>
+        {loading ? <AppSectionLoading label={t('common.loading')} compact />
         : filtered.length === 0 ? <div className="text-center py-12 text-muted-foreground"><Package className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>{t('cost.noMaterials')}</p></div>
         : isMobile ? renderMobileCards() : renderTable()}
       </div>

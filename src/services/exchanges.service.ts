@@ -93,8 +93,7 @@ export async function fetchExchangeRates(tenantId: string): Promise<ExchangeRate
 }
 
 /**
- * 获取所有汇率（无租户过滤，按日期降序）
- * 用于汇率展示面板
+ * @deprecated 使用 fetchExchangeRates(tenantId)，避免跨租户读取汇率
  */
 export async function fetchAllExchangeRates(): Promise<ExchangeRate[]> {
   const { data, error } = await supabase
@@ -102,7 +101,7 @@ export async function fetchAllExchangeRates(): Promise<ExchangeRate[]> {
     .select('*')
     .order('rate_date', { ascending: false })
     .order('created_at', { ascending: false });
-  
+
   if (error) handleSupabaseError(error);
   return (data || []) as ExchangeRate[];
 }
@@ -120,50 +119,173 @@ export async function deleteExchangeRate(id: string): Promise<void> {
 }
 
 /**
- * 调用自动获取汇率边缘函数
+ * 调用自动获取汇率：先尝试 Edge Function，失败则客户端直接采集
  */
 export async function invokeAutoFetchRates(tenantId: string | undefined, manual: boolean): Promise<{ success: boolean; message?: string; source?: string; error?: string }> {
-  const { data, error } = await supabase.functions.invoke('fetch-exchange-rates', {
-    body: { manual, tenant_id: tenantId },
-  });
-  if (error) throw error;
-  return data;
+  // 1) 先尝试 Edge Function
+  try {
+    const { data, error } = await supabase.functions.invoke('fetch-exchange-rates', {
+      body: { manual, tenant_id: tenantId },
+    });
+    if (!error && data?.success) return data;
+  } catch {
+    // Edge Function 不可用，降级到客户端获取
+  }
+
+  // 2) 客户端直接从免费 API 获取汇率
+  return clientSideFetchRates(tenantId);
+}
+
+type CurrencyRates = { USD: number; CNY: number; MYR: number };
+
+async function fetchFromOpenErApi(): Promise<CurrencyRates> {
+  const res = await fetch('https://open.er-api.com/v6/latest/USD');
+  if (!res.ok) throw new Error(`open.er-api HTTP ${res.status}`);
+  const data = await res.json();
+  if (data?.result !== 'success' || !data?.rates?.CNY || !data?.rates?.MYR)
+    throw new Error('open.er-api payload invalid');
+  return { USD: 1, CNY: Number(data.rates.CNY), MYR: Number(data.rates.MYR) };
+}
+
+async function fetchFromFrankfurter(): Promise<CurrencyRates> {
+  const res = await fetch('https://api.frankfurter.app/latest?from=USD&to=CNY,MYR');
+  if (!res.ok) throw new Error(`frankfurter HTTP ${res.status}`);
+  const data = await res.json();
+  if (!data?.rates?.CNY || !data?.rates?.MYR) throw new Error('frankfurter payload invalid');
+  return { USD: 1, CNY: Number(data.rates.CNY), MYR: Number(data.rates.MYR) };
+}
+
+async function fetchFromCurrencyApi(): Promise<CurrencyRates> {
+  const res = await fetch(
+    'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json'
+  );
+  if (!res.ok) throw new Error(`currency-api HTTP ${res.status}`);
+  const data = await res.json();
+  if (!data?.usd?.cny || !data?.usd?.myr) throw new Error('currency-api payload invalid');
+  return { USD: 1, CNY: Number(data.usd.cny), MYR: Number(data.usd.myr) };
+}
+
+async function clientSideFetchRates(
+  tenantId: string | undefined
+): Promise<{ success: boolean; message?: string; source?: string; error?: string }> {
+  const apis = [fetchFromOpenErApi, fetchFromFrankfurter, fetchFromCurrencyApi];
+  const apiNames = ['open.er-api.com', 'frankfurter.app', 'currency-api'];
+
+  let rates: CurrencyRates | null = null;
+  let sourceName = '';
+
+  for (let i = 0; i < apis.length; i++) {
+    try {
+      rates = await apis[i]();
+      sourceName = apiNames[i];
+      break;
+    } catch (e) {
+      console.warn(`Client-side API ${apiNames[i]} failed:`, e);
+    }
+  }
+
+  if (!rates) {
+    return { success: false, error: '无法从任何来源获取汇率，请检查网络后重试' };
+  }
+
+  const pairs: Array<{ from: string; to: string }> = [
+    { from: 'CNY', to: 'MYR' }, { from: 'USD', to: 'MYR' }, { from: 'CNY', to: 'USD' },
+    { from: 'USD', to: 'CNY' }, { from: 'MYR', to: 'CNY' }, { from: 'MYR', to: 'USD' },
+  ];
+
+  const today = new Date().toISOString().split('T')[0];
+  let successCount = 0;
+
+  for (const pair of pairs) {
+    const fromRate = pair.from === 'USD' ? 1 : rates[pair.from as keyof CurrencyRates];
+    const toRate = pair.to === 'USD' ? 1 : rates[pair.to as keyof CurrencyRates];
+    const calculatedRate = Number((toRate / fromRate).toFixed(6));
+
+    let existingQuery = supabase
+      .from('exchange_rates')
+      .select('id')
+      .eq('from_currency', pair.from as any)
+      .eq('to_currency', pair.to as any)
+      .eq('rate_date', today);
+
+    if (tenantId) existingQuery = existingQuery.eq('tenant_id', tenantId);
+
+    const { data: existing } = await existingQuery.limit(1).maybeSingle();
+
+    const payload: Record<string, any> = {
+      from_currency: pair.from,
+      to_currency: pair.to,
+      rate: calculatedRate,
+      rate_date: today,
+      source: 'auto',
+      ...(tenantId && { tenant_id: tenantId }),
+    };
+
+    let error;
+    if (existing?.id) {
+      ({ error } = await supabase.from('exchange_rates').update(payload).eq('id', existing.id));
+    } else {
+      ({ error } = await supabase.from('exchange_rates').insert(payload));
+    }
+
+    if (!error) successCount++;
+  }
+
+  return {
+    success: successCount > 0,
+    message: `成功更新 ${successCount} 个汇率`,
+    source: sourceName,
+  };
 }
 
 /**
- * 获取最新汇率映射表（from_to → rate）
+ * 获取最新汇率映射表（from_to → rate），按租户隔离
  */
-export async function fetchLatestRateMap(): Promise<Record<string, number>> {
-  const { data } = await supabase
+export async function fetchLatestRateMap(tenantId?: string | null): Promise<Record<string, number>> {
+  let q = supabase
     .from('exchange_rates')
     .select('from_currency, to_currency, rate')
     .order('rate_date', { ascending: false });
-  
-  const rates: Record<string, number> = {};
-  if (data) {
-    data.forEach(r => {
-      const key = `${r.from_currency}_${r.to_currency}`;
-      if (!rates[key]) {
-        rates[key] = r.rate;
-      }
-    });
+
+  if (tenantId) {
+    q = q.eq('tenant_id', tenantId);
   }
+
+  const { data, error } = await q;
+  if (error) handleSupabaseError(error);
+
+  const rates: Record<string, number> = {};
+  (data || []).forEach(r => {
+    const key = `${r.from_currency}_${r.to_currency}`;
+    if (!rates[key]) {
+      rates[key] = r.rate;
+    }
+  });
   return rates;
 }
 
 /**
- * 获取特定货币对的最新汇率
+ * 获取特定货币对的最新汇率（按租户隔离）
  */
-export async function fetchLatestPairRate(fromCurrency: string, toCurrency: string): Promise<number | null> {
-  const { data } = await supabase
+export async function fetchLatestPairRate(
+  fromCurrency: string,
+  toCurrency: string,
+  tenantId?: string | null
+): Promise<number | null> {
+  let q = supabase
     .from('exchange_rates')
     .select('rate')
     .eq('from_currency', fromCurrency as any)
     .eq('to_currency', toCurrency as any)
     .order('rate_date', { ascending: false })
-    .limit(1)
-    .single();
-  
+    .limit(1);
+
+  if (tenantId) {
+    q = q.eq('tenant_id', tenantId);
+  }
+
+  const { data, error } = await q.maybeSingle();
+  if (error) handleSupabaseError(error);
   return data?.rate ?? null;
 }
 

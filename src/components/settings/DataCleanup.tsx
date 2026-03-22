@@ -23,7 +23,6 @@ import {
   ArrowRightLeft,
   FileText,
   Shield,
-  Loader2,
   CheckCircle2,
   XCircle,
   Square
@@ -31,6 +30,7 @@ import {
 import { fetchDataCounts as fetchDataCountsService, batchDeleteTable as batchDeleteTableService, resetAccountBalances, verifyPassword } from '@/services/admin.service';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
+import { AppSectionLoading, ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 
 interface DataCategory {
   id: string;
@@ -313,10 +313,12 @@ export function DataCleanup() {
 
         {/* Data Categories */}
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-            <span className="ml-2 text-muted-foreground">{t('cleanup.counting')}</span>
-          </div>
+          <AppSectionLoading
+            label={t('cleanup.counting')}
+            description={t('cleanup.counting')}
+            compact
+            className="min-h-[160px] py-12"
+          />
         ) : (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -411,7 +413,7 @@ export function DataCleanup() {
             >
               {cleaning ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <ChromeLoadingSpinner variant="muted" className="h-4 w-4" />
                   {t('cleanup.cleaning')}
                 </>
               ) : (

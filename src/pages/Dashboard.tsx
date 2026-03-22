@@ -19,7 +19,6 @@ import { CartesianGrid } from '@/components/ui/cartesian-grid-fix';
 import { Link, useNavigate } from 'react-router-dom';
 import { useI18n } from '@/lib/i18n';
 import { DataConsistencyAlert } from '@/components/dashboard/DataConsistencyAlert';
-import { DashboardSkeleton } from '@/components/ui/skeletons';
 import { OnboardingTour } from '@/components/onboarding/OnboardingTour';
 import { getDashboardTourSteps, DASHBOARD_TOUR_KEY } from '@/components/onboarding/tourSteps';
 import { DashStatCard } from '@/components/dashboard/DashStatCard';
@@ -32,6 +31,7 @@ import { useBaseCurrency } from '@/hooks/useBaseCurrency';
 import { useTenant } from '@/lib/tenant';
 import { useDashboardData, useCategoryAnalysis } from '@/hooks/useDashboardService';
 import { useDashboardLayout } from '@/hooks/useDashboardLayout';
+import { AppSectionLoading, ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import {
   Popover, PopoverContent, PopoverTrigger,
 } from '@/components/ui/popover';
@@ -97,8 +97,9 @@ export default function Dashboard() {
   };
 
   const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
-    queryClient.invalidateQueries({ queryKey: queryKeys.dashboardCategories });
+    if (!tenantId) return;
+    queryClient.invalidateQueries({ queryKey: [...queryKeys.dashboard, tenantId] });
+    queryClient.invalidateQueries({ queryKey: [...queryKeys.dashboardCategories, tenantId] });
   };
 
   const getStatusLabel = (status: string) => {
@@ -121,7 +122,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <MainLayout>
-        <DashboardSkeleton />
+        <AppSectionLoading label={t('common.loading')} />
       </MainLayout>
     );
   }
@@ -159,8 +160,8 @@ export default function Dashboard() {
             </PopoverContent>
           </Popover>
           <Button variant="outline" size="sm" onClick={handleRefresh} disabled={loading}>
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            {loading ? t('dashboard.refreshing') : t('dashboard.refreshData')}
+            {loading ? <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+            {t('dashboard.refreshData')}
           </Button>
         </div>
 
@@ -438,7 +439,7 @@ export default function Dashboard() {
             <CardContent className="relative">
               {categoryLoading && (
                 <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10 rounded-lg">
-                  <RefreshCw className="w-5 h-5 animate-spin text-muted-foreground" />
+                  <ChromeLoadingSpinner variant="muted" className="h-5 w-5" />
                 </div>
               )}
               <Tabs defaultValue="company_daily" className="w-full">

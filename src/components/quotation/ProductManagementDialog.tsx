@@ -14,6 +14,7 @@ import { useProductCategories } from '@/hooks/useProductCategories';
 import { useQuery } from '@tanstack/react-query';
 import { fetchMeasurementUnits } from '@/services/quotation.service';
 import { useAuth } from '@/lib/auth';
+import { useTenant } from '@/lib/tenant';
 import { useI18n } from '@/lib/i18n';
 import type { Product } from '@/types/quotation';
 
@@ -41,9 +42,9 @@ export function ProductManagementDialog({ open, onOpenChange }: Props) {
   const isAdmin = userRole === 'admin';
 
   const { data: measurementUnits = [] } = useQuery({
-    queryKey: ['q_measurement_units'],
+    queryKey: ['q_measurement_units', tenantId],
     queryFn: fetchMeasurementUnits,
-    enabled: !!user,
+    enabled: !!user && !!tenantId,
     staleTime: 5 * 60 * 1000,
   });
 

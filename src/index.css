@@ -121,11 +121,40 @@
     @apply border-border;
   }
 
+  html {
+    min-height: 100%;
+    min-height: 100dvh;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  html:not(.dark) {
+    color-scheme: light;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-family: 'Plus Jakarta Sans', 'Noto Sans SC', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    min-height: 100%;
+    min-height: 100dvh;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #root {
+    min-height: 100%;
+    min-height: 100dvh;
+  }
+
+  /* 主内容区原生滚动 + iOS 惯性（用于 MainLayout main 等） */
+  .app-main-scroll {
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
   }
 
   ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -408,12 +437,19 @@
     to { opacity: 1; transform: scale(1); }
   }
 
+  /* 弱化位移，减少首屏与路由切换时的「整块内容上跳」感 */
   .animate-page-enter {
-    animation: pageEnter 0.3s ease-out;
+    animation: pageEnter 0.2s ease-out;
   }
   @keyframes pageEnter {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0.96; }
+    to { opacity: 1; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-page-enter {
+      animation: none;
+    }
   }
 
   .animate-pulse-subtle {
@@ -422,6 +458,12 @@
   @keyframes pulseSubtle {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.7; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-pulse-subtle {
+      animation: none;
+    }
   }
 
   .number-positive { @apply text-success; }

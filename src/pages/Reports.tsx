@@ -27,7 +27,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal } from 'lucide-react';
 import { useTenant } from '@/lib/tenant';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { useReportData, useYearlyData } from '@/hooks/useReportsService';
 import { format } from 'date-fns';
 
@@ -215,10 +215,7 @@ export default function Reports() {
         </div>
 
         {isLoading ? (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">{[1,2,3,4].map(i => <Skeleton key={i} className="h-24" />)}</div>
-            <Skeleton className="h-[400px]" />
-          </div>
+          <AppSectionLoading label={t('common.loading')} className="min-h-[min(50dvh,28rem)]" />
         ) : (
           <>
             {/* Overview cards */}

@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useI18n } from '@/lib/i18n';
-import { Loader2, Lock, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
+import { Lock, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import companyLogo from '@/assets/company-logo.png';
 
 export default function ResetPassword() {
@@ -57,7 +58,7 @@ export default function ResetPassword() {
 
   if (done) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-dvh flex items-center justify-center bg-background">
         <div className="text-center space-y-4 animate-fade-in">
           <CheckCircle2 className="w-16 h-16 text-success mx-auto" />
           <h1 className="text-xl font-bold text-foreground">{language === 'zh' ? '密码已重置' : 'Password Reset'}</h1>
@@ -70,7 +71,7 @@ export default function ResetPassword() {
   const inputClassName = "bg-white border-[#E6E9EE] rounded-lg h-11 focus-visible:ring-0 focus-visible:border-[#0F172A] pl-10 pr-10 text-[#0F172A] placeholder:text-[#94A3B8]";
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center overflow-hidden">
+    <div className="min-h-dvh relative flex items-center justify-center overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-br from-[#071027] via-[#0F172A] to-[#1a2035]" />
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#2563EB]/[0.07] rounded-full blur-[120px] -translate-y-1/3 translate-x-1/4" />
 
@@ -110,7 +111,7 @@ export default function ResetPassword() {
               </div>
             </div>
             <Button type="submit" className="w-full h-12 rounded-lg bg-[#0F172A] hover:bg-[#1E293B] text-white font-medium" disabled={isSubmitting}>
-              {isSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{language === 'zh' ? '重置中...' : 'Resetting...'}</> : (language === 'zh' ? '重置密码' : 'Reset Password')}
+              {isSubmitting ? <><ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />{language === 'zh' ? '重置中...' : 'Resetting...'}</> : (language === 'zh' ? '重置密码' : 'Reset Password')}
             </Button>
           </form>
         )}

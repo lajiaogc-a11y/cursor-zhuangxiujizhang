@@ -286,15 +286,27 @@ export async function fetchProjectFinancialsDetail(projectId: string): Promise<{
   additions: any[];
   projectData: any;
 }> {
-  const [transactionsRes, additionsRes, projectRes] = await Promise.all([
-    supabase.from('transactions').select('*').eq('project_id', projectId).eq('ledger_type', 'project')
-      .order('transaction_date', { ascending: false }).order('sequence_no', { ascending: false }),
+  const [additionsRes, projectRes] = await Promise.all([
     supabase.from('project_additions').select('*').eq('project_id', projectId)
       .order('addition_date', { ascending: false }),
     supabase.from('projects').select('*').eq('id', projectId).single(),
   ]);
 
-  let transactions = transactionsRes.data || [];
+  // 分页取项目全量流水，避免默认 1000 行截断
+  const PAGE_SIZE = 1000;
+  let transactions: any[] = [];
+  let page = 0;
+  while (true) {
+    const { data, error } = await supabase.from('transactions').select('*')
+      .eq('project_id', projectId).eq('ledger_type', 'project')
+      .order('transaction_date', { ascending: false }).order('sequence_no', { ascending: false })
+      .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    transactions = transactions.concat(data);
+    if (data.length < PAGE_SIZE) break;
+    page++;
+  }
   const userIds = [...new Set(transactions.map((tx: any) => tx.created_by).filter(Boolean))];
   if (userIds.length > 0) {
     const { data: profiles } = await supabase.from('profiles').select('user_id, display_name, username').in('user_id', userIds);
@@ -326,16 +338,22 @@ export async function fetchActiveEmployees(): Promise<{ id: string; name: string
   return data || [];
 }
 
-export async function fetchLatestExchangeRateForCurrency(currency: string): Promise<number | null> {
+export async function fetchLatestExchangeRateForCurrency(
+  currency: string,
+  tenantId?: string | null
+): Promise<number | null> {
   if (currency === 'MYR') return 1;
-  const { data } = await supabase
+  let q = supabase
     .from('exchange_rates')
     .select('rate')
     .eq('from_currency', currency as any)
     .eq('to_currency', 'MYR')
     .order('rate_date', { ascending: false })
-    .limit(1)
-    .single();
+    .limit(1);
+  if (tenantId) {
+    q = q.eq('tenant_id', tenantId);
+  }
+  const { data } = await q.maybeSingle();
   return data?.rate ?? null;
 }
 

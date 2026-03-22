@@ -1,0 +1,8 @@
+# Cloudflare Pages — 在控制台复制 Account ID 填到下面（右侧边栏或域名概览页）
+# https://dash.cloudflare.com → 选中账户 → 右侧「Account ID」
+name = "cursor-zhuangxiujizhang"
+compatibility_date = "2024-11-01"
+pages_build_output_dir = "dist"
+
+# 取消下一行注释并填入你的 32 位 Account ID（可与 Token 权限范围一致）
+# account_id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"

@@ -1,6 +1,7 @@
 import { ReactNode, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Home, Settings, MoreVertical, LogOut, Loader2, Moon, Sun, Globe, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Home, Settings, MoreVertical, LogOut, Moon, Sun, Globe, ChevronRight } from 'lucide-react';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
 import {
@@ -61,7 +62,7 @@ export function MobilePageShell({ title, titleEn, subtitle, icon, backTo, childr
   };
 
   return (
-    <div className={cn("min-h-screen bg-background flex flex-col", className)}>
+    <div className={cn("min-h-dvh bg-background flex flex-col", className)}>
       <header className="bg-card/80 backdrop-blur-xl border-b border-border/60 sticky top-0 z-50 shrink-0">
         <div className="flex items-center h-14 px-2 gap-1">
           <Button variant="ghost" size="icon" onClick={() => navigate(getBackPath())} className="h-9 w-9 shrink-0">
@@ -131,7 +132,7 @@ export function MobilePageShell({ title, titleEn, subtitle, icon, backTo, childr
         <div className={cn("h-[2px] opacity-60", accentGradient ? `bg-gradient-to-r ${accentGradient}` : "bg-gradient-to-r from-primary via-accent to-primary opacity-40")} />
       </header>
 
-      <main className="flex-1 overflow-auto animate-page-enter pb-16 lg:pb-0">{children}</main>
+      <main className="flex-1 min-h-0 app-main-scroll pb-16 lg:pb-0 animate-page-enter">{children}</main>
 
       {/* FAB / Action bar */}
       {fab && (
@@ -149,7 +150,7 @@ export function MobilePageShell({ title, titleEn, subtitle, icon, backTo, childr
           <AlertDialogFooter>
             <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleSignOut} disabled={isSigningOut} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {isSigningOut && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {isSigningOut && <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />}
               {t('auth.logout')}
             </AlertDialogAction>
           </AlertDialogFooter>

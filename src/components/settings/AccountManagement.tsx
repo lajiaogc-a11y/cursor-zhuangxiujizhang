@@ -6,11 +6,12 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Settings2, Edit2, RefreshCw, Calculator, ChevronDown, ChevronUp } from 'lucide-react';
+import { Settings2, Edit2, Calculator, ChevronDown, ChevronUp } from 'lucide-react';
 import { settingsService } from '@/services';
 import { useI18n } from '@/lib/i18n';
 import { useTenant } from '@/lib/tenant';
 import { toast } from '@/hooks/use-toast';
+import { AppSectionLoading, ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 
 interface Account {
   id: string;
@@ -145,7 +146,7 @@ export function AccountManagement({ onBalanceChange }: AccountManagementProps) {
                 disabled={recalculating}
               >
                 {recalculating ? (
-                  <RefreshCw className="w-4 h-4 animate-spin mr-1" />
+                  <ChromeLoadingSpinner variant="muted" className="mr-1 h-4 w-4" />
                 ) : (
                   <Calculator className="w-4 h-4 mr-1" />
                 )}
@@ -155,7 +156,7 @@ export function AccountManagement({ onBalanceChange }: AccountManagementProps) {
           </DialogHeader>
 
           {loading ? (
-            <div className="text-center py-8 text-muted-foreground">{t('common.loading')}</div>
+            <AppSectionLoading label={t('common.loading')} compact />
           ) : (
             <div className="space-y-4">
               {Object.entries(groupedAccounts).map(([currency, currencyAccounts]) => (

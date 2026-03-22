@@ -22,7 +22,7 @@ import { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { useTenant } from '@/lib/tenant';
 import { useExchangeTransactions } from '@/hooks/useExchangeService';
 
@@ -63,7 +63,7 @@ export default function Exchange() {
   const handleSuccess = () => {
     setDialogOpen(false);
     setEditingExchange(null);
-    queryClient.invalidateQueries({ queryKey: queryKeys.exchanges });
+    if (tenantId) queryClient.invalidateQueries({ queryKey: [...queryKeys.exchanges, tenantId] });
     refreshExchanges();
     refreshAccounts();
     refreshDashboard();
@@ -75,7 +75,7 @@ export default function Exchange() {
   };
 
   const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.exchanges });
+    if (tenantId) queryClient.invalidateQueries({ queryKey: [...queryKeys.exchanges, tenantId] });
   };
 
   // 计算统计数据
@@ -199,9 +199,7 @@ export default function Exchange() {
         <Card>
           <CardContent className="pt-6">
             {isLoading ? (
-              <div className="space-y-3">
-                {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
-              </div>
+              <AppSectionLoading label={t('common.loading')} compact />
             ) : (
               <ExchangeList
                 exchanges={filteredExchanges}

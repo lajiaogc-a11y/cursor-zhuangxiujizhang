@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchSystemCurrency, updateSystemCurrencySettings } from '@/services/admin.service';
 import { useAuth } from '@/lib/auth';
+import { useTenant } from '@/lib/tenant';
 
 export type SystemCurrency = 'MYR' | 'CNY' | 'USD';
 
@@ -14,18 +15,20 @@ export type CurrencyScope = 'all' | 'quotation' | 'cost' | 'purchasing' | 'finan
 
 export function useSystemCurrency() {
   const { user } = useAuth();
+  const { tenant } = useTenant();
+  const tenantId = tenant?.id;
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['system_currency'],
+    queryKey: ['system_currency', tenantId],
     queryFn: async () => {
-      const result = await fetchSystemCurrency();
+      const result = await fetchSystemCurrency(tenantId!);
       return {
         currency: result.currency as SystemCurrency,
         scopes: result.scopes as CurrencyScope[],
       };
     },
-    enabled: !!user,
+    enabled: !!user && !!tenantId,
     staleTime: 10 * 60 * 1000,
   });
 
@@ -34,11 +37,13 @@ export function useSystemCurrency() {
 
   const updateSystemCurrency = useMutation({
     mutationFn: async ({ currency, scopes }: { currency: SystemCurrency; scopes: CurrencyScope[] }) => {
-      await updateSystemCurrencySettings(currency, scopes);
+      if (!tenantId) throw new Error('No tenant');
+      await updateSystemCurrencySettings(currency, scopes, tenantId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['system_currency'] });
-      queryClient.invalidateQueries({ queryKey: ['q_company_settings'] });
+      if (!tenantId) return;
+      queryClient.invalidateQueries({ queryKey: ['system_currency', tenantId] });
+      queryClient.invalidateQueries({ queryKey: ['q_company_settings', tenantId] });
     },
   });
 

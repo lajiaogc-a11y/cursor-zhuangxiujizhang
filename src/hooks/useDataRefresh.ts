@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
-import { queryKeys, invalidationMap } from '@/lib/queryKeys';
+import { queryKeys, invalidationMap, invalidateQueriesWithTenant } from '@/lib/queryKeys';
+import { useTenant } from '@/lib/tenant';
 
 /**
  * 统一的数据刷新 Hook
@@ -8,53 +9,57 @@ import { queryKeys, invalidationMap } from '@/lib/queryKeys';
  */
 export function useDataRefresh() {
   const queryClient = useQueryClient();
+  const { tenant } = useTenant();
+  const tenantId = tenant?.id;
 
-  // 刷新交易相关数据
+  // 刷新交易相关数据（当前租户）
   const refreshTransactions = useCallback(() => {
-    invalidationMap.transactionMutation.forEach(key => {
-      queryClient.invalidateQueries({ queryKey: key });
-    });
-  }, [queryClient]);
+    invalidateQueriesWithTenant(queryClient, tenantId, invalidationMap.transactionMutation);
+  }, [queryClient, tenantId]);
 
-  // 刷新项目相关数据
+  // 刷新项目相关数据（当前租户）
   const refreshProjects = useCallback(() => {
-    invalidationMap.projectMutation.forEach(key => {
-      queryClient.invalidateQueries({ queryKey: key });
-    });
-  }, [queryClient]);
+    invalidateQueriesWithTenant(queryClient, tenantId, invalidationMap.projectMutation);
+  }, [queryClient, tenantId]);
 
   // 刷新项目交易数据
-  const refreshProjectTransactions = useCallback((projectId: string) => {
-    invalidationMap.projectTransactionMutation(projectId).forEach(key => {
-      queryClient.invalidateQueries({ queryKey: key });
-    });
-  }, [queryClient]);
+  const refreshProjectTransactions = useCallback(
+    (projectId: string) => {
+      if (!tenantId) return;
+      invalidateQueriesWithTenant(queryClient, tenantId, invalidationMap.projectTransactionMutationPrefixes);
+      queryClient.invalidateQueries({ queryKey: queryKeys.projectTransactions(tenantId, projectId) });
+      queryClient.invalidateQueries({ queryKey: [...queryKeys.projects, tenantId, 'financials', projectId] });
+    },
+    [queryClient, tenantId]
+  );
 
   // 刷新项目增项数据
-  const refreshProjectAdditions = useCallback((projectId: string) => {
-    invalidationMap.projectAdditionMutation(projectId).forEach(key => {
-      queryClient.invalidateQueries({ queryKey: key });
-    });
-  }, [queryClient]);
+  const refreshProjectAdditions = useCallback(
+    (projectId: string) => {
+      if (!tenantId) return;
+      invalidateQueriesWithTenant(queryClient, tenantId, invalidationMap.projectAdditionMutationPrefixes);
+      queryClient.invalidateQueries({ queryKey: queryKeys.projectAdditions(tenantId, projectId) });
+      queryClient.invalidateQueries({ queryKey: [...queryKeys.projects, tenantId, 'financials', projectId] });
+    },
+    [queryClient, tenantId]
+  );
 
-  // 刷新换汇数据
+  // 刷新换汇数据（当前租户）
   const refreshExchanges = useCallback(() => {
-    invalidationMap.exchangeMutation.forEach(key => {
-      queryClient.invalidateQueries({ queryKey: key });
-    });
-  }, [queryClient]);
+    invalidateQueriesWithTenant(queryClient, tenantId, invalidationMap.exchangeMutation);
+  }, [queryClient, tenantId]);
 
-  // 刷新账户数据
+  // 刷新账户数据（当前租户）
   const refreshAccounts = useCallback(() => {
-    invalidationMap.accountMutation.forEach(key => {
-      queryClient.invalidateQueries({ queryKey: key });
-    });
-  }, [queryClient]);
+    invalidateQueriesWithTenant(queryClient, tenantId, invalidationMap.accountMutation);
+  }, [queryClient, tenantId]);
 
-  // 刷新仪表盘数据
+  // 刷新仪表盘数据（当前租户）
   const refreshDashboard = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
-  }, [queryClient]);
+    if (!tenantId) return;
+    queryClient.invalidateQueries({ queryKey: [...queryKeys.dashboard, tenantId] });
+    queryClient.invalidateQueries({ queryKey: [...queryKeys.dashboardCategories, tenantId] });
+  }, [queryClient, tenantId]);
 
   // 刷新所有数据
   const refreshAll = useCallback(() => {

@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { Heart, Server, Database, HardDrive, RefreshCw, CheckCircle2, XCircle, Clock, Users, FileBox } from 'lucide-react';
+import { Heart, Server, Database, HardDrive, RefreshCw, CheckCircle2, XCircle, Users, FileBox } from 'lucide-react';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { useI18n } from '@/lib/i18n';
 import { useState } from 'react';
 import { format } from 'date-fns';
@@ -80,7 +81,7 @@ export function SystemHealth() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className={`w-3 h-3 rounded-full ${anyError ? 'bg-destructive animate-pulse' : allOk ? 'bg-success' : 'bg-warning animate-pulse'}`} />
+          <div className={`w-3 h-3 rounded-full motion-reduce:animate-none ${anyError ? 'bg-destructive animate-pulse' : allOk ? 'bg-success' : 'bg-warning animate-pulse'}`} />
           <span className="text-sm font-medium">
             {anyError ? (zh ? '系统异常' : 'System Issues') : allOk ? (zh ? '所有服务正常' : 'All Systems Operational') : (zh ? '检测中...' : 'Checking...')}
           </span>
@@ -106,7 +107,7 @@ export function SystemHealth() {
                 ) : check.status === 'error' ? (
                   <XCircle className="w-4 h-4 text-destructive" />
                 ) : (
-                  <Clock className="w-4 h-4 text-muted-foreground animate-spin" />
+                  <ChromeLoadingSpinner variant="muted" className="h-4 w-4" />
                 )}
               </div>
               <div className="flex items-center justify-between">

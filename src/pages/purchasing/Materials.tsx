@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -22,6 +22,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { purchasingService } from '@/services';
 import { useAuth } from '@/lib/auth';
+import { useTenant } from '@/lib/tenant';
 import { useI18n } from '@/lib/i18n';
 import { useToast } from '@/hooks/use-toast';
 import { useResponsive } from '@/hooks/useResponsive';
@@ -30,6 +31,8 @@ import { useQSuppliers } from '@/hooks/useQSuppliers';
 
 export default function PurchasingMaterialsPage() {
   const { user } = useAuth();
+  const { tenant } = useTenant();
+  const tenantId = tenant?.id;
   const { t } = useI18n();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -46,15 +49,15 @@ export default function PurchasingMaterialsPage() {
   const cnyToMyr = rates.cnyToMyr || 0.65;
 
   const { data: shippingRate = 0 } = useQuery({
-    queryKey: ['q_cost_settings_shipping'],
+    queryKey: ['q_cost_settings_shipping', tenantId],
     queryFn: () => purchasingService.fetchShippingRate(),
-    enabled: !!user,
+    enabled: !!user && !!tenantId,
   });
 
   const { data: materials = [], isLoading } = useQuery({
-    queryKey: ['q_materials_purchasing'],
+    queryKey: ['q_materials_purchasing', tenantId],
     queryFn: () => purchasingService.fetchPurchasingMaterials(),
-    enabled: !!user,
+    enabled: !!user && !!tenantId,
   });
 
   const tabFiltered = materials.filter((m: any) => tabFilter === 'all' ? true : m.materialType === tabFilter);
@@ -74,8 +77,8 @@ export default function PurchasingMaterialsPage() {
   const save = useMutation({
     mutationFn: (m: any) => purchasingService.saveMaterial(m, user?.id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['q_materials_purchasing'] });
-      queryClient.invalidateQueries({ queryKey: ['q_materials_cost'] });
+      queryClient.invalidateQueries({ queryKey: ['q_materials_purchasing', tenantId] });
+      queryClient.invalidateQueries({ queryKey: ['q_materials_cost', tenantId] });
       toast({ title: t('mat.materialSaved') });
       setDialogOpen(false);
     },
@@ -85,8 +88,8 @@ export default function PurchasingMaterialsPage() {
   const del = useMutation({
     mutationFn: (id: string) => purchasingService.deactivateMaterial(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['q_materials_purchasing'] });
-      queryClient.invalidateQueries({ queryKey: ['q_materials_cost'] });
+      queryClient.invalidateQueries({ queryKey: ['q_materials_purchasing', tenantId] });
+      queryClient.invalidateQueries({ queryKey: ['q_materials_cost', tenantId] });
       toast({ title: t('mat.materialDeleted') });
       setDeleteId(null);
     },
@@ -192,7 +195,7 @@ export default function PurchasingMaterialsPage() {
     <MobilePageShell title={t('pmat.title')} icon={<Package className="w-5 h-5" />} backTo="/purchasing"
       headerActions={
         <div className="flex gap-1">
-          <Button size="sm" variant="outline" className="h-8 gap-1" onClick={() => { queryClient.invalidateQueries({ queryKey: ['q_materials_purchasing'] }); toast({ title: t('purchasing.autoSync') }); }}>
+          <Button size="sm" variant="outline" className="h-8 gap-1" onClick={() => { queryClient.invalidateQueries({ queryKey: ['q_materials_purchasing', tenantId] }); toast({ title: t('purchasing.autoSync') }); }}>
             <RefreshCw className="w-3.5 h-3.5" /> {t('purchasing.autoSync')}
           </Button>
           <Button size="sm" className="h-8 gap-1" onClick={() => { setEditing({ name: '', code: '', specification: '', unit: '个', defaultPrice: 0, notes: '', materialType: 'cost', wastePct: 0, priceCny: 0, volumeCbm: 0, defaultSupplierId: '' }); setDialogOpen(true); }}>
@@ -219,7 +222,7 @@ export default function PurchasingMaterialsPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input placeholder={t('pmat.searchPlaceholder')} value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
         </div>
-        {isLoading ? <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-20" />)}</div>
+        {isLoading ? <AppSectionLoading label={t('common.loading')} compact />
         : searched.length === 0 ? <div className="text-center py-12 text-muted-foreground"><Package className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>{t('pmat.noMaterials')}</p></div>
         : isMobile ? renderMobileCards() : renderTable()}
       </div>

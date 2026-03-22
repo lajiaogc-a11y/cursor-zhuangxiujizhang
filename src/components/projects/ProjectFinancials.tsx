@@ -18,6 +18,7 @@ import { useI18n } from '@/lib/i18n';
 import { CurrencyStatsPanel, calculateCurrencyStats } from '@/components/ui/currency-stats-panel';
 import { useAuth } from '@/lib/auth';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { ChevronDown } from 'lucide-react';
 
 interface Project {
@@ -323,7 +324,7 @@ export function ProjectFinancials({ open, onOpenChange, project, onRefresh }: Pr
 
             <TabsContent value="transactions" className="mt-4 flex-1 overflow-y-auto">
               {loading ? (
-                <div className="text-center py-8 text-muted-foreground">{t('common.loading')}</div>
+                <AppSectionLoading label={t('common.loading')} compact />
               ) : (
                 <ProjectTransactionList
                   transactions={transactions}
@@ -340,7 +341,7 @@ export function ProjectFinancials({ open, onOpenChange, project, onRefresh }: Pr
                 </Button>
               </div>
               {loading ? (
-                <div className="text-center py-8 text-muted-foreground">{t('common.loading')}</div>
+                <AppSectionLoading label={t('common.loading')} compact />
               ) : additions.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">{t('projectFinancials.noAdditions')}</div>
               ) : (

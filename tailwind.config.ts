@@ -108,6 +108,10 @@ export default {
           "0%, 100%": { boxShadow: "0 0 5px hsl(var(--primary))" },
           "50%": { boxShadow: "0 0 20px hsl(var(--primary))" },
         },
+        "route-bar": {
+          "0%": { transform: "translateX(-120%)" },
+          "100%": { transform: "translateX(320%)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -115,6 +119,7 @@ export default {
         "fade-in": "fade-in 0.3s ease-out",
         "slide-in": "slide-in 0.3s ease-out",
         "pulse-glow": "pulse-glow 2s ease-in-out infinite",
+        "route-bar": "route-bar 0.75s ease-in-out infinite",
       },
 fontFamily: {
         sans: ["Plus Jakarta Sans", "Noto Sans SC", "system-ui", "sans-serif"],

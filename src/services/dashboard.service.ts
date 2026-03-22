@@ -348,35 +348,30 @@ function buildFinancialSummary(
   allTx: any[],
   adj: ReturnType<typeof buildAccountAdjustments>
 ): FinancialSummary {
-  const balanceByCurrencyAccount: Record<string, number> = {};
+  // company_accounts.balance（adj）已经是 recalculate 后的「流水累计值」，
+  // 直接以 adj 为余额来源；仅从 transactions 汇总收入/支出/股金等统计量，
+  // 不再把流水差额叠加到 adj 上，避免双重计算。
   let totalIncomeMYR = 0, totalExpenseMYR = 0, equityIncomeMYR = 0;
 
   allTx.forEach((tx: any) => {
-    const cur = tx.currency || 'MYR';
-    const acct = tx.account_type || 'cash';
-    const key = `${cur}_${acct}`;
-    if (!balanceByCurrencyAccount[key]) balanceByCurrencyAccount[key] = 0;
     if (tx.type === 'income') {
-      balanceByCurrencyAccount[key] += Number(tx.amount || 0);
       totalIncomeMYR += Number(tx.amount_myr || 0);
       if (tx.category_name?.includes('股金')) equityIncomeMYR += Number(tx.amount_myr || 0);
     } else {
-      balanceByCurrencyAccount[key] -= Number(tx.amount || 0);
       totalExpenseMYR += Number(tx.amount_myr || 0);
     }
   });
 
-  const get = (c: string, a: string) => balanceByCurrencyAccount[`${c}_${a}`] || 0;
   return {
-    total_myr: get('MYR', 'cash') + get('MYR', 'bank') + adj.MYR.total,
-    total_cny: get('CNY', 'cash') + get('CNY', 'bank') + adj.CNY.total,
-    total_usd: get('USD', 'cash') + get('USD', 'bank') + adj.USD.total,
-    myr_cash: get('MYR', 'cash') + adj.MYR.cash,
-    myr_bank: get('MYR', 'bank') + adj.MYR.bank,
-    cny_cash: get('CNY', 'cash') + adj.CNY.cash,
-    cny_bank: get('CNY', 'bank') + adj.CNY.bank,
-    usd_cash: get('USD', 'cash') + adj.USD.cash,
-    usd_bank: get('USD', 'bank') + adj.USD.bank,
+    total_myr: adj.MYR.total,
+    total_cny: adj.CNY.total,
+    total_usd: adj.USD.total,
+    myr_cash: adj.MYR.cash,
+    myr_bank: adj.MYR.bank,
+    cny_cash: adj.CNY.cash,
+    cny_bank: adj.CNY.bank,
+    usd_cash: adj.USD.cash,
+    usd_bank: adj.USD.bank,
     total_income_myr: totalIncomeMYR,
     total_expense_myr: totalExpenseMYR,
     equity_income_myr: equityIncomeMYR,

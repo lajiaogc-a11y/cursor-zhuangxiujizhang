@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MobilePageShell } from '@/components/layout/MobilePageShell';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { useI18n } from '@/lib/i18n';
 import { useAuth } from '@/lib/auth';
 import { useTenant } from '@/lib/tenant';
@@ -40,22 +41,22 @@ export default function CRMCustomerDetail() {
   const [activityForm, setActivityForm] = useState({ activity_type: 'note', content: '', next_follow_up: '' });
   const [reminderForm, setReminderForm] = useState({ title: '', remind_at: '' });
 
-  const { data: customer } = useQuery({
-    queryKey: ['crm-customer', customerId],
+  const { data: customer, isPending: customerLoading, isError: customerError } = useQuery({
+    queryKey: ['crm-customer', tenantId, customerId],
     queryFn: () => fetchCustomerById(customerId!),
-    enabled: !!customerId,
+    enabled: !!customerId && !!tenantId,
   });
 
   const { data: activities = [] } = useQuery({
-    queryKey: ['crm-activities', customerId],
+    queryKey: ['crm-activities', tenantId, customerId],
     queryFn: () => fetchContactActivities(customerId!),
-    enabled: !!customerId,
+    enabled: !!customerId && !!tenantId,
   });
 
   const { data: reminders = [] } = useQuery({
-    queryKey: ['crm-reminders', customerId],
+    queryKey: ['crm-reminders', tenantId, customerId],
     queryFn: () => fetchContactReminders(customerId!),
-    enabled: !!customerId,
+    enabled: !!customerId && !!tenantId,
   });
 
   const addActivityMutation = useMutation({
@@ -69,8 +70,8 @@ export default function CRMCustomerDetail() {
         tenant_id: tenantId,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['crm-activities', customerId] });
-      queryClient.invalidateQueries({ queryKey: ['crm-customer', customerId] });
+      queryClient.invalidateQueries({ queryKey: ['crm-activities', tenantId, customerId] });
+      queryClient.invalidateQueries({ queryKey: ['crm-customer', tenantId, customerId] });
       setActivityDialogOpen(false);
       setActivityForm({ activity_type: 'note', content: '', next_follow_up: '' });
       toast.success(t('common.success'));
@@ -88,7 +89,7 @@ export default function CRMCustomerDetail() {
         tenant_id: tenantId,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['crm-reminders', customerId] });
+      queryClient.invalidateQueries({ queryKey: ['crm-reminders', tenantId, customerId] });
       setReminderDialogOpen(false);
       setReminderForm({ title: '', remind_at: '' });
       toast.success(t('common.success'));
@@ -99,7 +100,7 @@ export default function CRMCustomerDetail() {
   const toggleReminderMutation = useMutation({
     mutationFn: ({ id, completed }: { id: string; completed: boolean }) =>
       toggleContactReminder(id, completed),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['crm-reminders', customerId] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['crm-reminders', tenantId, customerId] }),
   });
 
   const activityTypeConfig: Record<string, { icon: any; label: string; color: string }> = {
@@ -123,8 +124,22 @@ export default function CRMCustomerDetail() {
     return <Badge className={c.class}>{c.label}</Badge>;
   };
 
-  if (!customer) {
-    return <MobilePageShell title={t('common.loading')} backTo="/crm/customers"><div className="flex items-center justify-center h-64 text-muted-foreground">{t('common.loading')}</div></MobilePageShell>;
+  if (customerLoading) {
+    return (
+      <MobilePageShell title={t('common.loading')} backTo="/crm/customers">
+        <AppSectionLoading label={t('common.loading')} compact className="min-h-[50dvh]" />
+      </MobilePageShell>
+    );
+  }
+
+  if (!customer || customerError) {
+    return (
+      <MobilePageShell title={t('common.noData')} backTo="/crm/customers">
+        <div className="flex flex-col items-center justify-center min-h-[16rem] text-muted-foreground text-center px-4">
+          {t('common.noData')}
+        </div>
+      </MobilePageShell>
+    );
   }
 
   return (

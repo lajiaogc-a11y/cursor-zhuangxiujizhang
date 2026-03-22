@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { MobilePageShell } from '@/components/layout/MobilePageShell';
+import { AppSectionLoading, ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { useI18n } from '@/lib/i18n';
 import { useTenant } from '@/lib/tenant';
 import { crmService } from '@/services';
@@ -40,7 +41,7 @@ export default function CRMTemplates() {
       await crmService.saveTemplate(tenantId!, values, editing?.id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contract_templates'] });
+      queryClient.invalidateQueries({ queryKey: ['contract_templates', tenantId] });
       setShowDialog(false);
       setEditing(null);
       toast.success(editing ? t('common.updateSuccess') : t('common.createSuccess'));
@@ -51,7 +52,7 @@ export default function CRMTemplates() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => crmService.deleteTemplate(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contract_templates'] });
+      queryClient.invalidateQueries({ queryKey: ['contract_templates', tenantId] });
       toast.success(t('common.deleteSuccess'));
     },
   });
@@ -96,7 +97,7 @@ export default function CRMTemplates() {
         </div>
 
         {isLoading ? (
-          <div className="text-center py-12 text-muted-foreground">{t('common.loading')}</div>
+          <AppSectionLoading label={t('common.loading')} compact />
         ) : templates.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16 text-muted-foreground">
@@ -188,7 +189,8 @@ export default function CRMTemplates() {
                   onClick={() => saveMutation.mutate(form)}
                   disabled={!form.name || !form.content || saveMutation.isPending}
                 >
-                  {saveMutation.isPending ? t('common.saving') : t('common.save')}
+                  {saveMutation.isPending && <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />}
+                  {t('common.save')}
                 </Button>
               </div>
             </div>

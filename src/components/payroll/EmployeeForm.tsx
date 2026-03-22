@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/auth';
 import { useTenant } from '@/lib/tenant';
 import { saveEmployee, fetchActivePositions } from '@/services/payroll.service';
-import { Loader2 } from 'lucide-react';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 
 interface Employee {
   id: string;
@@ -182,7 +182,7 @@ export function EmployeeForm({ open, onOpenChange, employee, onSuccess }: Employ
               {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {loading && <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />}
               {t('common.save')}
             </Button>
           </div>

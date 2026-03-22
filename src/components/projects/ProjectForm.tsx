@@ -17,6 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Combobox } from '@/components/ui/combobox';
 import { toast } from 'sonner';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { cn } from '@/lib/utils';
 import { Database } from '@/integrations/supabase/types';
 
@@ -182,7 +183,7 @@ export function ProjectForm({ open, onOpenChange, project, onSuccess }: ProjectF
 
   useEffect(() => {
     const fetchRate = async () => {
-      const rate = await fetchLatestExchangeRateForCurrency(currency);
+      const rate = await fetchLatestExchangeRateForCurrency(currency, tenant?.id);
       if (rate !== null) {
         setValue('exchange_rate_at_sign', rate);
         setLatestRate(rate);
@@ -492,7 +493,8 @@ export function ProjectForm({ open, onOpenChange, project, onSuccess }: ProjectF
           <div className="flex justify-end gap-3 pt-4 border-t">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{t('form.cancel')}</Button>
             <Button type="submit" disabled={loading}>
-              {loading ? t('form.saving') : (project ? t('projects.updateProject') : t('projects.createProject'))}
+              {loading && <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />}
+              {project ? t('projects.updateProject') : t('projects.createProject')}
             </Button>
           </div>
         </form>

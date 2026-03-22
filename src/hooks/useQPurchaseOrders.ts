@@ -7,6 +7,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/auth';
 import { useTenant } from '@/lib/tenant';
+import { queryKeys } from '@/lib/queryKeys';
 
 export interface QPurchaseOrder {
   id: string;
@@ -53,10 +54,11 @@ export function useQPurchaseOrders() {
   const { toast } = useToast();
   const { user } = useAuth();
   const { tenant } = useTenant();
+  const tenantId = tenant?.id;
   const queryClient = useQueryClient();
 
   const { data: orders = [], isLoading, error, refetch } = useQuery({
-    queryKey: ['q_purchase_orders'],
+    queryKey: ['q_purchase_orders', tenantId],
     queryFn: async () => {
       const data = await fetchPurchaseOrders();
       return data.map((o: any) => ({
@@ -103,7 +105,7 @@ export function useQPurchaseOrders() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['q_purchase_orders'] });
+      queryClient.invalidateQueries({ queryKey: ['q_purchase_orders', tenantId] });
       toast({ title: '采购单已创建', description: '新采购单已保存' });
     },
     onError: (error: any) => {
@@ -126,7 +128,7 @@ export function useQPurchaseOrders() {
       await logAudit(id, 'updated', '更新采购单');
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['q_purchase_orders'] });
+      queryClient.invalidateQueries({ queryKey: ['q_purchase_orders', tenantId] });
       toast({ title: '采购单已更新' });
     },
     onError: (error: any) => {
@@ -139,7 +141,7 @@ export function useQPurchaseOrders() {
       await deletePurchaseOrder(id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['q_purchase_orders'] });
+      queryClient.invalidateQueries({ queryKey: ['q_purchase_orders', tenantId] });
       toast({ title: '采购单已删除' });
     },
     onError: (error: any) => {
@@ -158,22 +160,22 @@ export function useQPurchaseOrders() {
     }
     await updatePurchaseOrderStatus(id, 'ordered');
     await logAudit(id, 'status_changed', '确认下单：草稿 → 已下单');
-    queryClient.invalidateQueries({ queryKey: ['q_purchase_orders'] });
+    queryClient.invalidateQueries({ queryKey: ['q_purchase_orders', tenantId] });
     toast({ title: '已确认下单' });
   };
 
   const submitToFinance = async (id: string) => {
     await submitPOToFinance(id, user!.id, tenant?.id);
     await logAudit(id, 'submitted_to_finance', '提交至财务部，已创建应付账款记录');
-    queryClient.invalidateQueries({ queryKey: ['q_purchase_orders'] });
-    queryClient.invalidateQueries({ queryKey: ['payables'] });
+    queryClient.invalidateQueries({ queryKey: ['q_purchase_orders', tenantId] });
+    queryClient.invalidateQueries({ queryKey: [...queryKeys.payables, tenantId] });
     toast({ title: '已提交至财务', description: '已自动创建应付账款记录' });
   };
 
   const archiveOrder = async (id: string) => {
     await updatePurchaseOrderStatus(id, 'archived');
     await logAudit(id, 'archived', '采购单已归档');
-    queryClient.invalidateQueries({ queryKey: ['q_purchase_orders'] });
+    queryClient.invalidateQueries({ queryKey: ['q_purchase_orders', tenantId] });
     toast({ title: '采购单已归档' });
   };
 

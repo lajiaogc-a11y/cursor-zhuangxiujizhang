@@ -26,7 +26,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { MoreHorizontal } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { fetchPeriodReport, fetchYearlyTrend, type CategoryData } from '@/services/monthlyReports.service';
 
 // Sub-component for grouped category display with pie chart + list
@@ -198,10 +198,7 @@ export default function MonthlyReports() {
         </div>
 
         {isLoading ? (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">{[1,2,3,4].map(i => <Skeleton key={i} className="h-24" />)}</div>
-            <Skeleton className="h-[300px]" />
-          </div>
+          <AppSectionLoading label={t('common.loading')} className="min-h-[min(50dvh,28rem)]" />
         ) : (
           <>
             {/* 当月统计卡片 */}

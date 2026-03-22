@@ -22,6 +22,7 @@ import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 
 // Lazy-loaded panels
 import { AuditLogs } from '@/components/settings/AuditLogs';
@@ -71,7 +72,7 @@ interface NavGroup { title: string; items: NavItem[]; }
 interface NavItem { key: AdminSection; icon: React.ReactNode; label: string; devOnly?: boolean; }
 
 export default function SuperAdmin() {
-  const { language } = useI18n();
+  const { language, t } = useI18n();
   const { user } = useAuth();
   const isSuperAdmin = useSuperAdmin();
   const navigate = useNavigate();
@@ -349,7 +350,7 @@ export default function SuperAdmin() {
 
   if (!isSuperAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-dvh flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
           <Shield className="w-12 h-12 text-muted-foreground mx-auto" />
           <p className="text-muted-foreground">{zh ? '无权访问此页面' : 'Access denied'}</p>
@@ -392,7 +393,7 @@ export default function SuperAdmin() {
 
       <div className="grid gap-3">
         {isLoading ? (
-          <p className="text-sm text-muted-foreground text-center py-12">{zh ? '加载中...' : 'Loading...'}</p>
+          <AppSectionLoading label={t('common.loading')} compact className="py-12" />
         ) : filtered.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-12">{zh ? '暂无租户' : 'No tenants'}</p>
         ) : filtered.map(t => (
@@ -481,7 +482,7 @@ export default function SuperAdmin() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-border bg-card">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 flex items-center h-14 gap-4">

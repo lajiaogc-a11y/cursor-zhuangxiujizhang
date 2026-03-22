@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ChromeLoadingSpinner } from "@/components/layout/AppChromeLoading";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const SIDEBAR_COOKIE_NAME = "sidebar:state";
@@ -531,28 +531,44 @@ const SidebarMenuSkeleton = React.forwardRef<
     showIcon?: boolean;
   }
 >(({ className, showIcon = false, ...props }, ref) => {
-  // Random width between 50 to 90%.
-  const width = React.useMemo(() => {
-    return `${Math.floor(Math.random() * 40) + 50}%`;
-  }, []);
-
   return (
     <div
       ref={ref}
       data-sidebar="menu-skeleton"
       className={cn("flex h-8 items-center gap-2 rounded-md px-2", className)}
+      role="status"
+      aria-busy="true"
+      aria-live="polite"
       {...props}
     >
-      {showIcon && <Skeleton className="size-4 rounded-md" data-sidebar="menu-skeleton-icon" />}
-      <Skeleton
-        className="h-4 max-w-[--skeleton-width] flex-1"
-        data-sidebar="menu-skeleton-text"
-        style={
-          {
-            "--skeleton-width": width,
-          } as React.CSSProperties
-        }
-      />
+      {showIcon ? (
+        <>
+          <span
+            data-sidebar="menu-skeleton-icon"
+            className="flex size-4 shrink-0 items-center justify-center"
+          >
+            <ChromeLoadingSpinner
+              variant="muted"
+              className="h-3.5 w-3.5 text-sidebar-foreground/55"
+            />
+          </span>
+          <div
+            data-sidebar="menu-skeleton-text"
+            className="min-h-4 min-w-0 flex-1"
+            aria-hidden
+          />
+        </>
+      ) : (
+        <div
+          data-sidebar="menu-skeleton-text"
+          className="flex min-h-4 min-w-0 flex-1 items-center justify-start"
+        >
+          <ChromeLoadingSpinner
+            variant="muted"
+            className="h-3.5 w-3.5 text-sidebar-foreground/45"
+          />
+        </div>
+      )}
     </div>
   );
 });

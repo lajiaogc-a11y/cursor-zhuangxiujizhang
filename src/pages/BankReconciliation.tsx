@@ -19,7 +19,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { bankReconciliationService } from '@/services';
 
 const formatCurrency = (amount: number, currency: string = 'MYR') => {
@@ -307,7 +307,9 @@ export default function BankReconciliation() {
           <CardHeader><CardTitle className="text-sm">{t('bank.statementList')}</CardTitle></CardHeader>
           <CardContent className="p-0">
             {isLoading ? (
-              <div className="p-4 space-y-3">{[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
+              <div className="p-2">
+                <AppSectionLoading label={t('common.loading')} compact />
+              </div>
             ) : (
               <Table>
                 <TableHeader><TableRow>

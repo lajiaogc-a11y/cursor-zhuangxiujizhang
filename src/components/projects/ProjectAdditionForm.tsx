@@ -118,7 +118,7 @@ export function ProjectAdditionForm({ open, onOpenChange, projectId, addition, o
       if (!useAutoRate) return;
       
       try {
-        const rate = await exchangeService.fetchLatestPairRate(currency, 'MYR');
+        const rate = await exchangeService.fetchLatestPairRate(currency, 'MYR', tenant?.id);
         if (rate) {
           setValue('exchange_rate', rate);
           setRateInput(rate.toFixed(4));
@@ -126,7 +126,7 @@ export function ProjectAdditionForm({ open, onOpenChange, projectId, addition, o
       } catch { /* ignore */ }
     };
     fetchRate();
-  }, [currency, setValue, useAutoRate]);
+  }, [currency, setValue, useAutoRate, tenant?.id]);
 
   const calculateMYR = () => {
     if (currency === 'MYR') return amount;
@@ -295,7 +295,8 @@ export function ProjectAdditionForm({ open, onOpenChange, projectId, addition, o
               {t('form.cancel')}
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? t('form.saving') : t('form.save')}
+              {loading && <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />}
+              {t('form.save')}
             </Button>
           </div>
         </form>

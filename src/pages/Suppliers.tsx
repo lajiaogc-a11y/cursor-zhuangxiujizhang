@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Search, Edit, Trash2, Star, Phone } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 
 type Supplier = QSupplier;
 
@@ -46,14 +47,16 @@ export default function Suppliers() {
   });
 
   const { data: priceCounts = {} } = useQuery({
-    queryKey: ['q_supplier_price_counts'],
-    queryFn: fetchSupplierPriceCounts,
+    queryKey: ['q_supplier_price_counts', tenantId],
+    queryFn: () => fetchSupplierPriceCounts(tenantId!),
+    enabled: !!tenantId,
   });
 
   const upsertMutation = useMutation({
     mutationFn: (values: typeof form & { id?: string }) => saveQSupplier(values, tenantId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['q_suppliers'] });
+      queryClient.invalidateQueries({ queryKey: ['q_suppliers', tenantId] });
+      queryClient.invalidateQueries({ queryKey: ['q_supplier_price_counts', tenantId] });
       setDialogOpen(false);
       setEditing(null);
       toast({ title: editing ? t('sup.supplierUpdated') : t('sup.supplierAdded') });
@@ -64,7 +67,8 @@ export default function Suppliers() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteQSupplier(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['q_suppliers'] });
+      queryClient.invalidateQueries({ queryKey: ['q_suppliers', tenantId] });
+      queryClient.invalidateQueries({ queryKey: ['q_supplier_price_counts', tenantId] });
       toast({ title: t('sup.supplierDeleted') });
     },
     onError: (err: any) => toast({ title: t('sup.deleteFailed'), description: err.message, variant: 'destructive' }),
@@ -148,7 +152,7 @@ export default function Suppliers() {
               </TableHeader>
               <TableBody>
                 {isLoading ? (
-                  <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">{t('common.loading')}</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={8} className="p-0"><AppSectionLoading label={t('common.loading')} compact /></TableCell></TableRow>
                 ) : filtered.length === 0 ? (
                   <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">{t('common.noData')}</TableCell></TableRow>
                 ) : filtered.map(s => (
@@ -238,7 +242,8 @@ export default function Suppliers() {
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('common.cancel')}</Button>
               <Button onClick={handleSubmit} disabled={upsertMutation.isPending}>
-                {upsertMutation.isPending ? t('sup.saving') : t('common.save')}
+                {upsertMutation.isPending && <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />}
+                {t('common.save')}
               </Button>
             </div>
           </div>

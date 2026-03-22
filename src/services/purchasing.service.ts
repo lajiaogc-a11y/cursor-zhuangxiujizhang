@@ -58,8 +58,9 @@ export async function deactivateMaterial(id: string) {
 }
 
 export async function fetchShippingRate() {
-  const { data } = await (supabase as any).from('q_cost_settings').select('value').eq('key', 'shipping_rate_per_cbm').single();
-  return Number(data?.value) || 0;
+  // q_cost_settings 表不存在；shipping_rate 暂未持久化，返回默认 0
+  // 后续可扩展到 q_company_settings.tax_settings 或独立设置表
+  return 0;
 }
 
 // ===== Suppliers =====

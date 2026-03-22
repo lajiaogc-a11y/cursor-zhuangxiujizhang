@@ -4,7 +4,8 @@ import { SortableTableHead } from '@/components/ui/sortable-table-head';
 import { useSortableTable } from '@/hooks/useSortableTable';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Edit, Trash2, Loader2 } from 'lucide-react';
+import { Edit, Trash2 } from 'lucide-react';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { useI18n } from '@/lib/i18n';
 import { useToast } from '@/hooks/use-toast';
 import { deleteSalaryPayment } from '@/services/payroll.service';
@@ -52,7 +53,7 @@ export function PaymentList({ payments, loading, onEdit, onRefresh, canEdit = tr
 
   const formatMoney = (amount: number) => `RM ${amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-  if (loading) return <div className="flex items-center justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
+  if (loading) return <AppSectionLoading label={t('common.loading')} compact />;
   if (payments.length === 0) return <div className="text-center py-8 text-muted-foreground">{t('payroll.noPayments')}</div>;
 
   if (isMobile) {

@@ -9,7 +9,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import * as adminService from '@/services/admin.service';
 import { useI18n } from '@/lib/i18n';
 import { toast } from 'sonner';
-import { Image, RefreshCw, CheckCircle, ChevronDown, ChevronRight, Loader2, AlertCircle } from 'lucide-react';
+import { Image, RefreshCw, CheckCircle, ChevronDown, ChevronRight, AlertCircle } from 'lucide-react';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 
 interface ImageFile {
   name: string;
@@ -227,7 +228,7 @@ export function ImageOptimization() {
               variant="outline"
             >
               {scanning ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />
               ) : (
                 <RefreshCw className="w-4 h-4 mr-2" />
               )}

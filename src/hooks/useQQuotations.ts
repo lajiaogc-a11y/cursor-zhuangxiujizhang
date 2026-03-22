@@ -85,21 +85,22 @@ export function useQQuotations() {
   const { user } = useAuth();
   const { t } = useI18n();
   const { tenant } = useTenant();
+  const tenantId = tenant?.id;
   const queryClient = useQueryClient();
 
   const { data: quotations = [], isLoading } = useQuery({
-    queryKey: ['q_quotations'],
+    queryKey: ['q_quotations', tenantId],
     queryFn: () => qs.fetchQuotations() as Promise<SavedQuotation[]>,
-    enabled: !!user,
+    enabled: !!user && !!tenantId,
   });
 
   const saveQuotation = useMutation({
     mutationFn: (data: qs.SaveQuotationData) => qs.saveQuotation(data, user?.id, tenant?.id),
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ['q_quotations'] });
-      queryClient.invalidateQueries({ queryKey: ['q_quotation_versions', result.id] });
-      queryClient.invalidateQueries({ queryKey: ['q-cost-control-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['q_project_breakdowns'] });
+      queryClient.invalidateQueries({ queryKey: ['q_quotations', tenantId] });
+      queryClient.invalidateQueries({ queryKey: ['q_quotation_versions', tenantId, result.id] });
+      queryClient.invalidateQueries({ queryKey: ['q-cost-control-stats', tenantId] });
+      queryClient.invalidateQueries({ queryKey: ['q_project_breakdowns', tenantId] });
       const statusLabel = result.status === 'sent' ? t('qspa.formalSaved') : t('qspa.draftSaved');
       toast({ title: statusLabel, description: `v${result.versionNumber}` });
     },
@@ -109,7 +110,7 @@ export function useQQuotations() {
   const deleteQuotationMut = useMutation({
     mutationFn: (id: string) => qs.deleteQuotation(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['q_quotations'] });
+      queryClient.invalidateQueries({ queryKey: ['q_quotations', tenantId] });
       toast({ title: t('qspa.quotationDeleted') });
     },
     onError: (e: any) => toast({ title: t('qspa.deleteFailed'), description: e.message, variant: 'destructive' }),
@@ -119,10 +120,12 @@ export function useQQuotations() {
 }
 
 export function useQuotationVersions(quotationId?: string) {
+  const { tenant } = useTenant();
+  const tenantId = tenant?.id;
   const { data: versions = [], isLoading } = useQuery({
-    queryKey: ['q_quotation_versions', quotationId],
+    queryKey: ['q_quotation_versions', tenantId, quotationId],
     queryFn: () => qs.fetchQuotationVersions(quotationId!) as Promise<QuotationVersion[]>,
-    enabled: !!quotationId,
+    enabled: !!quotationId && !!tenantId,
   });
 
   return { versions, loading: isLoading };
@@ -131,31 +134,33 @@ export function useQuotationVersions(quotationId?: string) {
 // Legacy hook kept for backward compatibility
 export function useQQuotationItems(quotationId: string | undefined) {
   const { user } = useAuth();
+  const { tenant } = useTenant();
+  const tenantId = tenant?.id;
   const { t } = useI18n();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const { data: items = [], isLoading } = useQuery({
-    queryKey: ['q_quotation_items', quotationId],
+    queryKey: ['q_quotation_items', tenantId, quotationId],
     queryFn: () => qs.fetchQuotationItems(quotationId!) as Promise<QuotationItemRow[]>,
-    enabled: !!user && !!quotationId,
+    enabled: !!user && !!tenantId && !!quotationId,
   });
 
   const addItem = useMutation({
     mutationFn: (item: Partial<QuotationItemRow>) => qs.addQuotationItem(quotationId!, item),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['q_quotation_items', quotationId] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['q_quotation_items', tenantId, quotationId] }),
     onError: (e: any) => toast({ title: t('common.addFailed'), description: e.message, variant: 'destructive' }),
   });
 
   const updateItem = useMutation({
     mutationFn: ({ id, ...item }: Partial<QuotationItemRow> & { id: string }) => qs.updateQuotationItem(id, item),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['q_quotation_items', quotationId] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['q_quotation_items', tenantId, quotationId] }),
     onError: (e: any) => toast({ title: t('common.updateFailed'), description: e.message, variant: 'destructive' }),
   });
 
   const deleteItem = useMutation({
     mutationFn: (id: string) => qs.deleteQuotationItem(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['q_quotation_items', quotationId] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['q_quotation_items', tenantId, quotationId] }),
     onError: (e: any) => toast({ title: t('common.deleteFailed'), description: e.message, variant: 'destructive' }),
   });
 

@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
@@ -151,7 +151,7 @@ export default function EditorPage() {
         </div>
 
         {itemsLoading ? (
-          <div className="space-y-2">{[1,2].map(i => <Skeleton key={i} className="h-20" />)}</div>
+          <AppSectionLoading label={t('common.loading')} compact />
         ) : items.length === 0 ? (
           <Card>
             <CardContent className="p-6 text-center text-muted-foreground text-sm">

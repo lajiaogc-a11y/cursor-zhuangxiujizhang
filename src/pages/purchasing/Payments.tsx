@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AppChromeLoading, ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -17,11 +17,12 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import {
-  ArrowLeft, DollarSign, Plus, Loader2, CreditCard, CheckCircle,
+  ArrowLeft, DollarSign, Plus, CreditCard, CheckCircle,
 } from 'lucide-react';
 import { purchasingService } from '@/services';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/auth';
+import { useTenant } from '@/lib/tenant';
 import { useI18n } from '@/lib/i18n';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -35,6 +36,8 @@ export default function PaymentsPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { tenant } = useTenant();
+  const tenantId = tenant?.id;
   const { t } = useI18n();
   const queryClient = useQueryClient();
 
@@ -46,9 +49,9 @@ export default function PaymentsPage() {
   });
 
   const { data, isLoading: loading } = useQuery({
-    queryKey: ['purchasePayments', orderId],
+    queryKey: ['purchasePayments', tenantId, orderId],
     queryFn: () => purchasingService.fetchPaymentPageData(orderId!),
-    enabled: !!orderId && !!user,
+    enabled: !!orderId && !!user && !!tenantId,
   });
 
   const orderNo = data?.orderNo ?? '';
@@ -80,16 +83,18 @@ export default function PaymentsPage() {
       await purchasingService.savePayment(orderId!, form, paidAmount, totalAmount, user?.id);
       toast({ title: t('pmts.paymentRecorded') });
       setDialogOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['purchasePayments', orderId] });
+      queryClient.invalidateQueries({ queryKey: ['purchasePayments', tenantId, orderId] });
+      queryClient.invalidateQueries({ queryKey: ['orderDetail', tenantId, orderId] });
+      queryClient.invalidateQueries({ queryKey: ['q_purchase_orders', tenantId] });
     } catch (error: any) {
       toast({ title: t('pmts.recordFailed'), description: error.message, variant: 'destructive' });
     } finally { setSaving(false); }
   };
 
-  if (loading) return <div className="min-h-screen bg-background p-6"><Skeleton className="h-8 w-48 mb-4" /><Skeleton className="h-64 w-full" /></div>;
+  if (loading) return <AppChromeLoading label={t('common.loading')} />;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <header className="border-b bg-card sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -169,7 +174,7 @@ export default function PaymentsPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('common.cancel')}</Button>
-            <Button onClick={handleSave} disabled={saving}>{saving && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}{t('pmts.confirmPay')}</Button>
+            <Button onClick={handleSave} disabled={saving}>{saving && <ChromeLoadingSpinner variant="muted" className="mr-1 h-4 w-4" />}{t('pmts.confirmPay')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

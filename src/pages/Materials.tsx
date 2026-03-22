@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchMaterials, upsertMaterial, deleteMaterial, type Material } from '@/services/settings.service';
 import { useAuth } from '@/lib/auth';
+import { useTenant } from '@/lib/tenant';
 import { useI18n } from '@/lib/i18n';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,6 +26,8 @@ const UNITS = ['个', '件', '米', '平方米', '公斤', '包', '桶', '箱', 
 
 export default function Materials() {
   const { hasPermission } = useAuth();
+  const { tenant } = useTenant();
+  const tenantId = tenant?.id;
   const { t } = useI18n();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -43,8 +47,9 @@ export default function Materials() {
   });
 
   const { data: materials = [], isLoading } = useQuery({
-    queryKey: ['q_materials'],
+    queryKey: ['q_materials', tenantId],
     queryFn: fetchMaterials,
+    enabled: !!tenantId,
   });
 
   const upsertMutation = useMutation({
@@ -53,7 +58,7 @@ export default function Materials() {
       await upsertMaterial(rest, id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['q_materials'] });
+      queryClient.invalidateQueries({ queryKey: ['q_materials', tenantId] });
       setDialogOpen(false);
       setEditingMaterial(null);
       toast({ title: editingMaterial ? t('mat.materialUpdated') : t('mat.materialAdded') });
@@ -64,7 +69,7 @@ export default function Materials() {
   const deleteMut = useMutation({
     mutationFn: deleteMaterial,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['q_materials'] });
+      queryClient.invalidateQueries({ queryKey: ['q_materials', tenantId] });
       toast({ title: t('mat.materialDeleted') });
     },
     onError: (err: any) => toast({ title: t('mat.deleteFailed'), description: err.message, variant: 'destructive' }),
@@ -171,7 +176,7 @@ export default function Materials() {
               </TableHeader>
               <TableBody>
                 {isLoading ? (
-                  <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">{t('common.loading')}</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={9} className="p-0"><AppSectionLoading label={t('common.loading')} compact /></TableCell></TableRow>
                 ) : filtered.length === 0 ? (
                   <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">{t('mat.noMaterials')}</TableCell></TableRow>
                 ) : filtered.map(m => (
@@ -256,7 +261,8 @@ export default function Materials() {
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setDialogOpen(false)}>{t('common.cancel')}</Button>
               <Button onClick={handleSubmit} disabled={upsertMutation.isPending}>
-                {upsertMutation.isPending ? t('mat.saving') : t('common.save')}
+                {upsertMutation.isPending && <ChromeLoadingSpinner variant="muted" className="mr-2 h-4 w-4" />}
+                {t('common.save')}
               </Button>
             </div>
           </div>

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN" translate="no" class="notranslate">
+<html lang="zh-CN" translate="no" class="dark notranslate">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -21,6 +21,43 @@
     <meta property="og:type" content="website" />
 
     <meta name="twitter:card" content="summary" />
+    <!-- 与 next-themes 同步，避免首屏深色→浅色闪变（默认深色，仅 localStorage 为 light 时移除 .dark） -->
+    <script>
+      (function () {
+        try {
+          var v = localStorage.getItem('theme');
+          if (v === 'light') document.documentElement.classList.remove('dark');
+          else document.documentElement.classList.add('dark');
+        } catch (e) {}
+      })();
+    </script>
+    <!-- 关键首屏：在打包 CSS 到达前即呈现最终深色背景，减少白屏/跳色 -->
+    <style id="critical-shell">
+      html {
+        color-scheme: dark;
+        min-height: 100%;
+        min-height: 100dvh;
+      }
+      html:not(.dark) {
+        color-scheme: light;
+      }
+      body {
+        margin: 0;
+        min-height: 100%;
+        min-height: 100dvh;
+        background-color: hsl(222 47% 6%);
+        color: hsl(214 32% 91%);
+        -webkit-overflow-scrolling: touch;
+      }
+      html:not(.dark) body {
+        background-color: hsl(220 14% 96%);
+        color: hsl(222 47% 11%);
+      }
+      #root {
+        min-height: 100%;
+        min-height: 100dvh;
+      }
+    </style>
   </head>
 
   <body>

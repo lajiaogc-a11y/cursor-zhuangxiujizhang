@@ -4,6 +4,7 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
+import { useTenant } from '@/lib/tenant';
 import * as balanceLedgerService from '@/services/balanceLedger.service';
 import { format } from 'date-fns';
 
@@ -54,8 +55,11 @@ export function useLedgerTransactions(
 
 export function useRefreshLedger() {
   const qc = useQueryClient();
+  const { tenant } = useTenant();
+  const tenantId = tenant?.id;
   return () => {
-    qc.invalidateQueries({ queryKey: queryKeys.calculatedBalances });
-    qc.invalidateQueries({ queryKey: queryKeys.balanceLedger });
+    if (!tenantId) return;
+    qc.invalidateQueries({ queryKey: [...queryKeys.calculatedBalances, tenantId] });
+    qc.invalidateQueries({ queryKey: [...queryKeys.balanceLedger, tenantId] });
   };
 }

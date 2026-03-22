@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Download, X, Loader2 } from 'lucide-react';
+import { Download, X } from 'lucide-react';
+import { ChromeLoadingSpinner } from '@/components/layout/AppChromeLoading';
 import { createStorageSignedUrl } from '@/services/admin.service';
 import { useI18n } from '@/lib/i18n';
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
@@ -112,7 +113,7 @@ export function ImagePreviewDialog({
             <h3 className="font-semibold mb-4" aria-hidden="true">{displayTitle}</h3>
             <div className="flex items-center justify-center bg-muted rounded-lg p-4 min-h-[400px]">
               {loading ? (
-                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                <ChromeLoadingSpinner variant="muted" className="h-8 w-8" />
               ) : error ? (
                 <div className="text-center text-muted-foreground">
                   <p>{error}</p>

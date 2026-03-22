@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
+import { useTenant } from '@/lib/tenant';
 import * as qs from '@/services/quotation.service';
 
 export interface QMaterial {
@@ -25,11 +26,13 @@ export interface QMaterial {
 
 export function useQMaterials(typeFilter?: 'cost' | 'all') {
   const { user } = useAuth();
+  const { tenant } = useTenant();
+  const tenantId = tenant?.id;
 
   const { data: materials = [], isLoading } = useQuery({
-    queryKey: ['q_materials_cost', typeFilter],
+    queryKey: ['q_materials_cost', tenantId, typeFilter],
     queryFn: () => qs.fetchQMaterials(typeFilter) as Promise<QMaterial[]>,
-    enabled: !!user,
+    enabled: !!user && !!tenantId,
   });
 
   return { materials, loading: isLoading };

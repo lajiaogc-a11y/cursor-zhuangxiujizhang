@@ -5,7 +5,8 @@ import { useSortableTable } from '@/hooks/useSortableTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Edit, Trash2, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Edit, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { AppSectionLoading } from '@/components/layout/AppChromeLoading';
 import { useI18n } from '@/lib/i18n';
 import { useToast } from '@/hooks/use-toast';
 import { deleteEmployee } from '@/services/payroll.service';
@@ -66,7 +67,7 @@ export function EmployeeList({ employees, loading, onEdit, onRefresh, canEdit = 
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
+    return <AppSectionLoading label={t('common.loading')} compact />;
   }
 
   if (employees.length === 0) {
